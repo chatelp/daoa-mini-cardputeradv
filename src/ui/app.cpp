@@ -21,6 +21,11 @@ constexpr int kDetailTextWidth = 216;
 // URL encodée dans le QR promo ; le site route lui-même FR/EN.
 constexpr const char* kPromoUrl = "https://daoa.app";
 
+struct HelpSection {
+    const char* title;
+    const char* body;
+};
+
 struct Strings {
     const char* subtitle;
     const char* startHint;
@@ -39,6 +44,78 @@ struct Strings {
     const char* detailImage;
     const char* const* detailLineTitles;  // 6 titres, bas → haut
     const char* detailNavHint;
+    const char* helpTitle;
+    const char* helpHint;
+    const HelpSection* helpSections;      // 6 sections, la dernière = touches
+    const char* const* helpKeys;          // 5 lignes
+};
+
+// Aide embarquée : adaptation condensée de l'écran « Comprendre » de
+// Daoa 2 (Localizable.xcstrings, clés understand.*), réécrite pour cette
+// plateforme — ici les lignes mouvantes sont vivantes (tirage ligne à
+// ligne), et une section décrit les touches.
+constexpr HelpSection kHelpFr[] = {
+    {"le yi jing",
+     "Le Livre des Transformations est l'un des plus anciens textes de sagesse "
+     "de la Chine. Soixante-quatre figures y décrivent les mouvements du "
+     "changement. Daoa s'en inspire pour une réflexion fondée sur le "
+     "discernement, non sur la prédiction."},
+    {"le tirage",
+     "Six lignes sont tirées une à une, de bas en haut, selon la méthode "
+     "traditionnelle des trois pièces. Le hasard est réel : il vient d'un "
+     "générateur matériel, et rien ne l'influence."},
+    {"les lignes mouvantes",
+     "Un vieux yang (cercle) ou un vieux yin (croix) est une ligne en "
+     "transformation. Ces lignes dessinent une seconde figure, celle vers "
+     "laquelle la situation tend — la figure complémentaire."},
+    {"interpréter",
+     "Le Yi Jing ne prédit pas l'avenir : il offre une vision symbolique du "
+     "présent, un miroir pour observer les forces en mouvement et avancer "
+     "avec plus de justesse."},
+    {"les textes",
+     "Les textes de chaque figure sont des formulations propres à Daoa, "
+     "fidèles aux traductions du domaine public de James Legge (1882) et "
+     "Charles de Harlez (1889)."},
+    {"les touches", nullptr},
+};
+
+constexpr HelpSection kHelpEn[] = {
+    {"the yi jing",
+     "The Book of Changes is one of the oldest wisdom texts of ancient "
+     "China. Sixty-four figures describe the movements of change. Daoa "
+     "draws on it for reflection grounded in discernment, not prediction."},
+    {"the casting",
+     "Six lines are cast one by one, from bottom to top, by the traditional "
+     "three-coins method. The chance is real: it comes from a hardware "
+     "generator, and nothing influences it."},
+    {"the moving lines",
+     "An old yang (circle) or old yin (cross) is a line in transformation. "
+     "These lines trace a second figure, the one the situation is tending "
+     "toward — the complementary figure."},
+    {"interpreting",
+     "The Yi Jing does not predict the future: it offers a symbolic view of "
+     "the present, a mirror for observing the forces in motion and moving "
+     "forward with better judgment."},
+    {"the texts",
+     "Each figure's texts are Daoa's own wording, faithful to the "
+     "public-domain translations of James Legge (1882) and Charles de "
+     "Harlez (1889)."},
+    {"the keys", nullptr},
+};
+
+constexpr const char* kHelpKeysFr[] = {
+    "espace — tirer, continuer",
+    "← → — figure obtenue / complémentaire",
+    "↓ — texte complet · ↑ ↓ — pages",
+    "L — langue · h — cette aide",
+    "esc — retour",
+};
+constexpr const char* kHelpKeysEn[] = {
+    "space — cast, continue",
+    "← → — first / complementary figure",
+    "↓ — full text · ↑ ↓ — pages",
+    "L — language · h — this help",
+    "esc — back",
 };
 
 constexpr const char* kLineTitlesFr[6] = {
@@ -66,6 +143,10 @@ constexpr Strings kStringsFr{
     "image",
     kLineTitlesFr,
     "↑ ↓ · esc",
+    "aide",
+    "h · aide",
+    kHelpFr,
+    kHelpKeysFr,
 };
 
 constexpr Strings kStringsEn{
@@ -86,6 +167,10 @@ constexpr Strings kStringsEn{
     "image",
     kLineTitlesEn,
     "↑ ↓ · esc",
+    "help",
+    "h · help",
+    kHelpEn,
+    kHelpKeysEn,
 };
 
 const Strings& str(Lang l) { return l == Lang::kFr ? kStringsFr : kStringsEn; }
@@ -138,21 +223,39 @@ void App::switchTo(Screen s, uint32_t now) {
         revealIndex_ = -1;
         completeAtMs_ = 0;
     }
-    // Ne pas revenir en page 0 quand on rentre de la lecture détaillée.
-    if (s == Screen::kResult && previous != Screen::kDetail) resultPage_ = 0;
+    // Ne pas revenir en page 0 quand on rentre de la lecture détaillée
+    // ni de l'aide.
+    if (s == Screen::kResult && previous != Screen::kDetail && previous != Screen::kHelp) {
+        resultPage_ = 0;
+    }
     if (s == Screen::kDetail) buildDetailDoc();
+    if (s == Screen::kHelp) buildHelpDoc();
 }
 
 void App::handleKey(Key k, uint32_t now) {
     if (k == Key::kLang) {
         lang_ = (lang_ == Lang::kFr) ? Lang::kEn : Lang::kFr;
         if (screen_ == Screen::kDetail) buildDetailDoc();
+        if (screen_ == Screen::kHelp) buildHelpDoc();
+        return;
+    }
+    if (k == Key::kHelp) {
+        if (screen_ == Screen::kHelp) {
+            switchTo(helpReturn_, now);
+        } else {
+            helpReturn_ = screen_;
+            switchTo(Screen::kHelp, now);
+        }
         return;
     }
     if (k == Key::kReset) {
-        // Depuis la lecture détaillée, esc revient au résultat ; partout
-        // ailleurs, à l'accueil.
-        switchTo(screen_ == Screen::kDetail ? Screen::kResult : Screen::kWelcome, now);
+        // esc contextuel : l'aide revient d'où l'on vient, la lecture
+        // détaillée au résultat, partout ailleurs à l'accueil.
+        if (screen_ == Screen::kHelp) {
+            switchTo(helpReturn_, now);
+        } else {
+            switchTo(screen_ == Screen::kDetail ? Screen::kResult : Screen::kWelcome, now);
+        }
         return;
     }
 
@@ -189,7 +292,8 @@ void App::handleKey(Key k, uint32_t now) {
             }
             break;
 
-        case Screen::kDetail: {
+        case Screen::kDetail:
+        case Screen::kHelp: {
             const int pageCount =
                 static_cast<int>((doc_.size() + kDetailLinesPerPage - 1) / kDetailLinesPerPage);
             if (k == Key::kDown || k == Key::kAction || k == Key::kNext) {
@@ -233,6 +337,7 @@ void App::renderFrame(uint32_t now) {
         case Screen::kResult: drawResult(now); break;
         case Screen::kDetail: drawDetail(now); break;
         case Screen::kPromo: drawPromo(now); break;
+        case Screen::kHelp: drawHelp(now); break;
     }
 }
 
@@ -276,10 +381,13 @@ void App::drawWelcome(uint32_t now) {
     s.setTextColor(fade(hint, now), theme::kBg);
     s.drawString(str(lang_).startHint, kCenterX, 122);
 
-    // Bascule de langue, discrète en haut à droite (décision 2026-08-08 :
-    // l'indication vit sur l'accueil, pas sur le résultat).
+    // Coins discrets : aide à gauche, bascule de langue à droite
+    // (décision 2026-08-08 : ces indications vivent sur l'accueil).
+    const uint16_t corner = fade(anim::lerp565(theme::kBg, theme::kMuted, 0.7f), now);
+    s.setTextColor(corner, theme::kBg);
+    s.setTextDatum(textdatum_t::top_left);
+    s.drawString(str(lang_).helpHint, 8, 8);
     s.setTextDatum(textdatum_t::top_right);
-    s.setTextColor(fade(anim::lerp565(theme::kBg, theme::kMuted, 0.7f), now), theme::kBg);
     s.drawString(str(lang_).langHint, 232, 8);
 }
 
@@ -329,22 +437,20 @@ void App::buildDetailDoc() {
     }
 }
 
-void App::drawDetail(uint32_t now) {
+void App::drawDocScreen(const char* headerLeft, uint32_t now) {
     auto& s = frame_;
     const uint16_t ink = fade(theme::kFg, now);
     const uint16_t stone = fade(theme::kMuted, now);
-    const HexagramInfo& h = hexagram(detailNumber_);
     const int pageCount =
         static_cast<int>((doc_.size() + kDetailLinesPerPage - 1) / kDetailLinesPerPage);
 
     char buf[208];
 
-    // En-tête : figure et pagination.
+    // En-tête : contexte et pagination.
     s.setFont(&fonts::efontJA_12);
     s.setTextColor(stone, theme::kBg);
     s.setTextDatum(textdatum_t::top_left);
-    snprintf(buf, sizeof(buf), "%d · %s · %s", h.number, h.pinyin, title(h, lang_));
-    s.drawString(buf, 12, 8);
+    s.drawString(headerLeft, 12, 8);
     s.setTextDatum(textdatum_t::top_right);
     snprintf(buf, sizeof(buf), "%d/%d", docPage_ + 1, pageCount);
     s.drawString(buf, 228, 8);
@@ -365,6 +471,33 @@ void App::drawDetail(uint32_t now) {
     s.setTextDatum(textdatum_t::bottom_right);
     s.setTextColor(stone, theme::kBg);
     s.drawString(str(lang_).detailNavHint, 228, 134);
+}
+
+void App::drawDetail(uint32_t now) {
+    const HexagramInfo& h = hexagram(detailNumber_);
+    char header[96];
+    snprintf(header, sizeof(header), "%d · %s · %s", h.number, h.pinyin, title(h, lang_));
+    drawDocScreen(header, now);
+}
+
+void App::drawHelp(uint32_t now) { drawDocScreen(str(lang_).helpTitle, now); }
+
+void App::buildHelpDoc() {
+    if (!ensureFrame()) return;
+    doc_.clear();
+    docPage_ = 0;
+    const Strings& t = str(lang_);
+    for (int i = 0; i < 6; ++i) {
+        const HelpSection& sec = t.helpSections[i];
+        appendDocText(sec.title, true);
+        if (sec.body != nullptr) {
+            appendDocText(sec.body, false);
+        } else {
+            // Dernière section : la liste des touches, une par ligne.
+            for (int j = 0; j < 5; ++j) appendDocText(t.helpKeys[j], false);
+            break;
+        }
+    }
 }
 
 void App::drawPromo(uint32_t now) {

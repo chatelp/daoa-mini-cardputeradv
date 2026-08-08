@@ -25,6 +25,7 @@ daoa::Key readKey() {
             case ';': return daoa::Key::kUp;     // ↑
             case '.': return daoa::Key::kDown;   // ↓
             case 'l': return daoa::Key::kLang;
+            case 'h': return daoa::Key::kHelp;
             case '`': return daoa::Key::kReset;
             default: break;
         }

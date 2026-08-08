@@ -130,6 +130,13 @@ int runShots() {
     app.handleKey(Key::kAction, 9900);                      // → promo
     shot(app, 10300, "10_promo.bmp");
 
+    app.handleKey(Key::kHelp, 10400);                       // aide (FR ici)
+    shot(app, 10800, "11_aide_p1_fr.bmp");
+    for (uint32_t t = 10850; t <= 11150; t += 50) {
+        app.handleKey(Key::kDown, t);                       // jusqu'en bas
+    }
+    shot(app, 11300, "12_aide_touches_fr.bmp");
+
     return 0;
 }
 
@@ -186,6 +193,7 @@ int runInteractive(bool* running) {
         {SDL_SCANCODE_UP, daoa::Key::kUp},
         {SDL_SCANCODE_DOWN, daoa::Key::kDown},
         {SDL_SCANCODE_L, daoa::Key::kLang},
+        {SDL_SCANCODE_H, daoa::Key::kHelp},
         {SDL_SCANCODE_ESCAPE, daoa::Key::kReset},
     };
 

@@ -13,7 +13,7 @@
 namespace daoa {
 
 // Entrées abstraites ; le mapping clavier vit dans main.cpp / main_sdl.cpp.
-enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kUp, kDown, kLang, kReset };
+enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kUp, kDown, kLang, kHelp, kReset };
 
 class App {
   public:
@@ -31,7 +31,7 @@ class App {
     lgfx::LGFX_Sprite& frame() { return frame_; }
 
   private:
-    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kPromo };
+    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kPromo, kHelp };
 
     // Une ligne du document de lecture détaillée : pointe dans le corpus
     // constant (aucune copie de texte), avec un style titre/corps.
@@ -50,8 +50,12 @@ class App {
     void drawResult(uint32_t now);
     void drawDetail(uint32_t now);
     void drawPromo(uint32_t now);
+    void drawHelp(uint32_t now);
     void buildDetailDoc();
+    void buildHelpDoc();
     void appendDocText(const char* text, bool title);
+    // Rendu commun des écrans-documents (lecture détaillée, aide).
+    void drawDocScreen(const char* headerLeft, uint32_t now);
     void drawCastLine(int index, LineValue v, float t, uint32_t now);
     void drawMiniFigure(int x, int yTop, bool complementary, uint32_t now);
     void drawBottomBar(const char* caption, bool showDots, uint32_t now);
@@ -67,10 +71,11 @@ class App {
     int revealIndex_ = -1;
     uint32_t completeAtMs_ = 0;
 
-    // Lecture détaillée (textes du corpus Daoa 2).
+    // Lecture détaillée (textes du corpus Daoa 2) et aide (même moteur).
     uint8_t detailNumber_ = 1;
     std::vector<DocLine> doc_;
     int docPage_ = 0;
+    Screen helpReturn_ = Screen::kWelcome;
 
     lgfx::LGFX_Sprite frame_;
     bool frameReady_ = false;
