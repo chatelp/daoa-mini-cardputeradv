@@ -34,8 +34,9 @@ hanzi avec bascule efontJA_24_b pour les figures 33/43/44. La fonte dédiée
       portrait + Jugement + Image + 6 traits, 64/64 bilingue, ~173 Ko) —
       ↓ depuis le résultat, pagination ↑/↓, esc retour
 - [x] Validation sur appareil : boucle complète OK (flash série direct)
-- [ ] Test de scan réel du QR sur l'écran physique
-- [ ] Validation finale du product owner sur l'ensemble du parcours
+- [x] Test de scan réel du QR sur l'écran physique — OK (2026-08-08)
+- [x] Validation finale du product owner sur l'ensemble du parcours —
+      **MVP validé le 2026-08-08**
 
 ## Phase 1.5 — Rituel et finitions
 

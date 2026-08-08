@@ -31,9 +31,11 @@ typo anti-aliasée et le mouvement, pas par la densité.
 - **Animations** : easing maison (`anim/easing.h` — cubic/quint out,
   pulse), pilotées par le temps (`millis`), jamais par des délais bloquants.
   Le simulateur SDL permet de régler les courbes à l'œil sur Mac.
-- **Palette** : encre sur papier (cohérente avec Daoa 2) — fond papier
-  chaud, encre presque noire, un seul accent discret. Définie dans
-  `ui/theme.h`, à valider visuellement au simulateur.
+- **Palette** : interface sombre (décision appareil 2026-08-08) — fond
+  noir pur qui se fond avec la lunette de l'écran, texte papier chaud,
+  gris pierre pour le secondaire, cinabre éclairci pour les marques de
+  mutation. Définie dans `ui/theme.h`. Taille de fonte minimale : 12 px
+  (efont 10 illisible sur l'écran physique).
 
 ## Entrées
 
