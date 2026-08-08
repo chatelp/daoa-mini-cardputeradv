@@ -108,14 +108,17 @@ int runShots() {
     shot(app, 6100, "03_tirage_complet.bmp");
 
     app.renderFrame(7200);                                  // bascule auto
-    shot(app, 7600, "04_resultat_fr.bmp");
+    shot(app, 7600, "04_resultat_en.bmp");
 
     app.handleKey(Key::kNext, 7700);
-    shot(app, 8100, "05_complementaire_fr.bmp");
+    shot(app, 8100, "05_complementaire_en.bmp");
 
     app.handleKey(Key::kLang, 8200);
     app.handleKey(Key::kNext, 8250);                        // retour page 1
-    shot(app, 8600, "06_resultat_en.bmp");
+    shot(app, 8600, "06_resultat_fr.bmp");
+
+    app.handleKey(Key::kAction, 8700);                      // → promo
+    shot(app, 9100, "07_promo.bmp");
 
     return 0;
 }

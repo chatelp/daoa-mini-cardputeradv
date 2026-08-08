@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "qrcode.h"
 #include "theme.h"
 
 namespace daoa {
@@ -14,37 +15,52 @@ constexpr uint32_t kRevealMs = 420;
 constexpr uint32_t kAutoResultDelayMs = 800;
 constexpr int kCenterX = theme::kWidth / 2;
 
+// URL encodée dans le QR promo ; le site route lui-même FR/EN.
+constexpr const char* kPromoUrl = "https://daoa.app";
+
 struct Strings {
     const char* subtitle;
     const char* startHint;
+    const char* langHint;     // accueil : bascule vers l'autre langue
     const char* castHintFmt;  // %d = numéro de la prochaine ligne
     const char* castDoneHint;
     const char* figureCaption;
     const char* complementCaption;
     const char* stableCaption;
     const char* keysHint;
+    const char* promoTagline;
+    const char* promoPlatforms;
+    const char* promoBackHint;
 };
 
 constexpr Strings kStringsFr{
     "Un tirage du Yi Jing",
     "espace · commencer",
+    "L · english",
     "espace · tirer la ligne %d / 6",
     "espace · lire la figure",
     "figure obtenue",
     "complémentaire",
     "figure stable",
-    "L english · esc",
+    "espace · esc",
+    "L'app complète du Yi Jing",
+    "iPhone · Android",
+    "esc · accueil",
 };
 
 constexpr Strings kStringsEn{
     "A Yi Jing casting",
     "space · begin",
+    "L · français",
     "space · cast line %d / 6",
     "space · read the figure",
     "first figure",
     "complementary",
     "stable figure",
-    "L français · esc",
+    "space · esc",
+    "The full Yi Jing app",
+    "iPhone · Android",
+    "esc · home",
 };
 
 const Strings& str(Lang l) { return l == Lang::kFr ? kStringsFr : kStringsEn; }
@@ -130,10 +146,16 @@ void App::handleKey(Key k, uint32_t now) {
         }
 
         case Screen::kResult:
-            if (k == Key::kNext || k == Key::kPrev || k == Key::kAction) {
+            if (k == Key::kNext || k == Key::kPrev) {
                 resultPage_ = resultPage_ == 0 ? 1 : 0;
                 enter_.start(now, 180);
+            } else if (k == Key::kAction) {
+                switchTo(Screen::kPromo, now);
             }
+            break;
+
+        case Screen::kPromo:
+            if (k == Key::kAction) switchTo(Screen::kWelcome, now);
             break;
     }
 }
@@ -157,6 +179,7 @@ void App::renderFrame(uint32_t now) {
         case Screen::kWelcome: drawWelcome(now); break;
         case Screen::kCasting: drawCasting(now); break;
         case Screen::kResult: drawResult(now); break;
+        case Screen::kPromo: drawPromo(now); break;
     }
 }
 
@@ -188,6 +211,61 @@ void App::drawWelcome(uint32_t now) {
     s.setFont(&fonts::efontJA_12);
     s.setTextColor(fade(hint, now), theme::kBg);
     s.drawString(str(lang_).startHint, kCenterX, 122);
+
+    // Bascule de langue, discrète en haut à droite (décision 2026-08-08 :
+    // l'indication vit sur l'accueil, pas sur le résultat).
+    s.setTextDatum(textdatum_t::top_right);
+    s.setTextColor(fade(anim::lerp565(theme::kBg, theme::kMuted, 0.7f), now), theme::kBg);
+    s.drawString(str(lang_).langHint, 232, 8);
+}
+
+void App::drawPromo(uint32_t now) {
+    auto& s = frame_;
+    const uint16_t ink = fade(theme::kFg, now);
+    const uint16_t stone = fade(theme::kMuted, now);
+
+    // QR généré une seule fois (URL constante).
+    static QRCode qr;
+    static uint8_t qrData[128];  // ≥ qrcode_getBufferSize(2) = 79
+    static bool qrReady = false;
+    if (!qrReady) {
+        qrcode_initText(&qr, qrData, 2, ECC_MEDIUM, kPromoUrl);
+        qrReady = true;
+    }
+
+    // Panneau clair à droite : modules 4 px + zone de silence.
+    const int scale = 4;
+    const int qrSize = qr.size * scale;          // 25 × 4 = 100
+    const int pad = 8;
+    const int panel = qrSize + 2 * pad;          // 116
+    const int px = theme::kWidth - panel - 8;    // 116
+    const int py = (theme::kHeight - panel) / 2;
+    const uint16_t white = theme::rgb565(0xFFFFFF);
+    const uint16_t black = theme::rgb565(0x000000);
+    s.fillRoundRect(px, py, panel, panel, 4, fade(white, now));
+    for (uint8_t y = 0; y < qr.size; ++y) {
+        for (uint8_t x = 0; x < qr.size; ++x) {
+            if (qrcode_getModule(&qr, x, y)) {
+                s.fillRect(px + pad + x * scale, py + pad + y * scale,
+                           scale, scale, black);
+            }
+        }
+    }
+
+    // Colonne texte à gauche du panneau.
+    const int colW = px - 20;  // marge 12 + respiration
+    s.setTextDatum(textdatum_t::top_left);
+    s.setFont(&fonts::DejaVu24);
+    s.setTextColor(ink, theme::kBg);
+    s.drawString("Daoa", 12, 18);
+    s.setFont(&fonts::efontJA_12);
+    s.setTextColor(ink, theme::kBg);
+    drawWrapped(s, str(lang_).promoTagline, 12, 52, colW, 15, 3);
+    s.setTextColor(stone, theme::kBg);
+    s.drawString(str(lang_).promoPlatforms, 12, 96);
+
+    s.setTextDatum(textdatum_t::bottom_left);
+    s.drawString(str(lang_).promoBackHint, 12, 132);
 }
 
 void App::drawCastLine(int index, LineValue v, float t, uint32_t now) {

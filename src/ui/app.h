@@ -30,7 +30,7 @@ class App {
     lgfx::LGFX_Sprite& frame() { return frame_; }
 
   private:
-    enum class Screen : uint8_t { kWelcome, kCasting, kResult };
+    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kPromo };
 
     void switchTo(Screen s, uint32_t now);
     bool ensureFrame();
@@ -39,13 +39,15 @@ class App {
     void drawWelcome(uint32_t now);
     void drawCasting(uint32_t now);
     void drawResult(uint32_t now);
+    void drawPromo(uint32_t now);
     void drawCastLine(int index, LineValue v, float t, uint32_t now);
     void drawMiniFigure(int x, int yTop, bool complementary, uint32_t now);
     void drawBottomBar(const char* caption, bool showDots, uint32_t now);
 
     CastSession session_;
     Screen screen_ = Screen::kWelcome;
-    Lang lang_ = Lang::kFr;
+    // Anglais par défaut (décision 2026-08-08) ; bascule L sur l'accueil.
+    Lang lang_ = Lang::kEn;
     uint8_t resultPage_ = 0;  // 0 = figure obtenue, 1 = complémentaire
 
     anim::Timeline enter_;    // fondu d'entrée d'écran
