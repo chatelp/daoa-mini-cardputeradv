@@ -146,12 +146,12 @@ bool App::ensureFrame() {
 }
 
 uint16_t App::fade(uint16_t c, uint32_t now) const {
-    return anim::lerp565(theme::kPaper, c, anim::easeOutCubic(enter_.progress(now)));
+    return anim::lerp565(theme::kBg, c, anim::easeOutCubic(enter_.progress(now)));
 }
 
 void App::renderFrame(uint32_t now) {
     if (!ensureFrame()) return;
-    frame_.fillSprite(theme::kPaper);
+    frame_.fillSprite(theme::kBg);
     frame_.setTextWrap(false);
     switch (screen_) {
         case Screen::kWelcome: drawWelcome(now); break;
@@ -169,24 +169,24 @@ void App::render(lgfx::LGFX_Device& dev, uint32_t now) {
 
 void App::drawWelcome(uint32_t now) {
     auto& s = frame_;
-    const uint16_t ink = fade(theme::kInk, now);
-    const uint16_t stone = fade(theme::kStone, now);
+    const uint16_t ink = fade(theme::kFg, now);
+    const uint16_t stone = fade(theme::kMuted, now);
 
     s.setTextDatum(textdatum_t::middle_center);
 
     s.setFont(&fonts::DejaVu40);
-    s.setTextColor(ink, theme::kPaper);
+    s.setTextColor(ink, theme::kBg);
     s.drawString("Daoa", kCenterX, 50);
 
     s.setFont(&fonts::efontJA_12);
-    s.setTextColor(stone, theme::kPaper);
+    s.setTextColor(stone, theme::kBg);
     s.drawString(str(lang_).subtitle, kCenterX, 82);
 
     // Respiration lente de l'invite.
     const float breath = 0.35f + 0.65f * anim::pulse(now, 2800);
-    const uint16_t hint = anim::lerp565(theme::kPaper, theme::kStone, breath);
-    s.setFont(&fonts::efontJA_10);
-    s.setTextColor(fade(hint, now), theme::kPaper);
+    const uint16_t hint = anim::lerp565(theme::kBg, theme::kMuted, breath);
+    s.setFont(&fonts::efontJA_12);
+    s.setTextColor(fade(hint, now), theme::kBg);
     s.drawString(str(lang_).startHint, kCenterX, 122);
 }
 
@@ -196,7 +196,7 @@ void App::drawCastLine(int index, LineValue v, float t, uint32_t now) {
     const int h = theme::kLineHeight;
     const int cy = y + h / 2;
     const float e = anim::easeOutQuint(t);
-    const uint16_t col = fade(anim::lerp565(theme::kPaper, theme::kInk, 0.2f + 0.8f * e), now);
+    const uint16_t col = fade(anim::lerp565(theme::kBg, theme::kFg, 0.2f + 0.8f * e), now);
 
     if (isYang(v)) {
         const int w = static_cast<int>(theme::kLineWidth * e);
@@ -214,7 +214,7 @@ void App::drawCastLine(int index, LineValue v, float t, uint32_t now) {
     // Marque de mutation, après la pose du trait.
     if (isMoving(v) && t > 0.7f) {
         const float mt = anim::clamp01((t - 0.7f) / 0.3f);
-        const uint16_t mc = fade(anim::lerp565(theme::kPaper, theme::kAccent, mt), now);
+        const uint16_t mc = fade(anim::lerp565(theme::kBg, theme::kAccent, mt), now);
         if (v == LineValue::kOldYang) {
             s.drawCircle(kCenterX, cy, 5, mc);
             s.drawCircle(kCenterX, cy, 6, mc);
@@ -231,7 +231,7 @@ void App::drawCasting(uint32_t now) {
     // Repères discrets des six emplacements.
     for (int i = 0; i < 6; ++i) {
         const int y = 10 + (5 - i) * theme::kLineSpacing + theme::kLineHeight / 2;
-        const uint16_t tick = fade(anim::lerp565(theme::kPaper, theme::kStone, 0.35f), now);
+        const uint16_t tick = fade(anim::lerp565(theme::kBg, theme::kMuted, 0.35f), now);
         s.fillRect(kCenterX - 1, y - 1, 2, 2, tick);
     }
 
@@ -254,15 +254,15 @@ void App::drawCasting(uint32_t now) {
                  static_cast<int>(count) + 1);
     }
     s.setTextDatum(textdatum_t::middle_center);
-    s.setFont(&fonts::efontJA_10);
-    s.setTextColor(fade(theme::kStone, now), theme::kPaper);
+    s.setFont(&fonts::efontJA_12);
+    s.setTextColor(fade(theme::kMuted, now), theme::kBg);
     s.drawString(hint, kCenterX, 124);
 }
 
 void App::drawMiniFigure(int x, int yTop, bool complementary, uint32_t now) {
     auto& s = frame_;
     const int w = 40, h = 4, gap = 10, spacing = 7;
-    const uint16_t ink = fade(theme::kInk, now);
+    const uint16_t ink = fade(theme::kFg, now);
     const uint16_t accent = fade(theme::kAccent, now);
 
     for (int i = 0; i < 6; ++i) {
@@ -292,8 +292,8 @@ void App::drawResult(uint32_t now) {
     const HexagramInfo& h = hexagram(number);
     const Strings& t = str(lang_);
 
-    const uint16_t ink = fade(theme::kInk, now);
-    const uint16_t stone = fade(theme::kStone, now);
+    const uint16_t ink = fade(theme::kFg, now);
+    const uint16_t stone = fade(theme::kMuted, now);
 
     s.setTextDatum(textdatum_t::top_left);
 
@@ -301,7 +301,7 @@ void App::drawResult(uint32_t now) {
     char header[48];
     snprintf(header, sizeof(header), "%d · %s", h.number, h.pinyin);
     s.setFont(&fonts::efontJA_12);
-    s.setTextColor(stone, theme::kPaper);
+    s.setTextColor(stone, theme::kBg);
     s.drawString(header, 12, 10);
 
     // Caractère chinois. efontCN couvre 61 figures ; 遯 (33), 夬 (43) et
@@ -313,19 +313,19 @@ void App::drawResult(uint32_t now) {
     } else {
         s.setFont(&fonts::efontCN_24_b);
     }
-    s.setTextColor(ink, theme::kPaper);
+    s.setTextColor(ink, theme::kBg);
     s.drawString(h.hanzi, 12, 26);
 
     // Titre, à gauche de la mini-figure.
     s.setFont(&fonts::efontJA_16_b);
-    s.setTextColor(ink, theme::kPaper);
+    s.setTextColor(ink, theme::kBg);
     const int titleLines = drawWrapped(s, title(h, lang_), 12, 56, 160, 18, 2);
 
     // Description.
     const int descY = 56 + titleLines * 18 + 6;
     const int maxLines = (120 - descY) / 14;
     s.setFont(&fonts::efontJA_12);
-    s.setTextColor(ink, theme::kPaper);
+    s.setTextColor(ink, theme::kBg);
     drawWrapped(s, description(h, lang_), 12, descY, 216, 14, maxLines > 0 ? maxLines : 1);
 
     drawMiniFigure(184, 12, complementary, now);
@@ -338,18 +338,18 @@ void App::drawResult(uint32_t now) {
 
 void App::drawBottomBar(const char* caption, bool showDots, uint32_t now) {
     auto& s = frame_;
-    const uint16_t stone = fade(theme::kStone, now);
+    const uint16_t stone = fade(theme::kMuted, now);
 
-    s.setFont(&fonts::efontJA_10);
-    s.setTextColor(stone, theme::kPaper);
+    s.setFont(&fonts::efontJA_12);
+    s.setTextColor(stone, theme::kBg);
     s.setTextDatum(textdatum_t::bottom_left);
     s.drawString(caption, 12, 134);
     s.setTextDatum(textdatum_t::bottom_right);
     s.drawString(str(lang_).keysHint, 228, 134);
 
     if (showDots) {
-        const uint16_t active = fade(theme::kInk, now);
-        const uint16_t inactive = fade(anim::lerp565(theme::kPaper, theme::kStone, 0.45f), now);
+        const uint16_t active = fade(theme::kFg, now);
+        const uint16_t inactive = fade(anim::lerp565(theme::kBg, theme::kMuted, 0.45f), now);
         s.fillCircle(kCenterX - 5, 129, 2, resultPage_ == 0 ? active : inactive);
         s.fillCircle(kCenterX + 5, 129, 2, resultPage_ == 1 ? active : inactive);
     }

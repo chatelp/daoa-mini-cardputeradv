@@ -125,8 +125,8 @@ int runFontTest() {
     lgfx::LGFX_Sprite s;
     s.setColorDepth(16);
     if (s.createSprite(240, 135) == nullptr) return 1;
-    s.fillSprite(daoa::theme::kPaper);
-    s.setTextColor(daoa::theme::kInk, daoa::theme::kPaper);
+    s.fillSprite(daoa::theme::kBg);
+    s.setTextColor(daoa::theme::kFg, daoa::theme::kBg);
     s.setTextDatum(textdatum_t::top_left);
     const char* sample = "ÉÈÊÀÇÙ Œœ éèêàçù";
     s.setFont(&fonts::efontCN_12);
