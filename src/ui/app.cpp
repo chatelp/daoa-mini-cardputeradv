@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "assets/wordmark_data.h"
 #include "qrcode.h"
 #include "theme.h"
 
@@ -242,20 +243,31 @@ void App::render(lgfx::LGFX_Device& dev, uint32_t now) {
 
 // ---------------------------------------------------------------- écrans
 
+// Lettermark « daoa » (masque 8 bits teinté) : anti-aliasing préservé et
+// fondu piloté par l'appelant.
+void drawWordmark(lgfx::LGFX_Sprite& s, int cx, int top, float fade01) {
+    constexpr uint16_t brand = theme::rgb565(kWordmarkRgb888);
+    const int x0 = cx - kWordmarkWidth / 2;
+    const uint8_t* p = kWordmarkAlpha;
+    for (int y = 0; y < kWordmarkHeight; ++y) {
+        for (int x = 0; x < kWordmarkWidth; ++x, ++p) {
+            if (*p == 0) continue;
+            const float a = (static_cast<float>(*p) / 255.f) * fade01;
+            s.drawPixel(x0 + x, top + y, anim::lerp565(theme::kBg, brand, a));
+        }
+    }
+}
+
 void App::drawWelcome(uint32_t now) {
     auto& s = frame_;
-    const uint16_t ink = fade(theme::kFg, now);
     const uint16_t stone = fade(theme::kMuted, now);
 
+    drawWordmark(s, kCenterX, 16, anim::easeOutCubic(enter_.progress(now)));
+
     s.setTextDatum(textdatum_t::middle_center);
-
-    s.setFont(&fonts::DejaVu40);
-    s.setTextColor(ink, theme::kBg);
-    s.drawString("Daoa", kCenterX, 50);
-
     s.setFont(&fonts::efontJA_12);
     s.setTextColor(stone, theme::kBg);
-    s.drawString(str(lang_).subtitle, kCenterX, 82);
+    s.drawString(str(lang_).subtitle, kCenterX, 98);
 
     // Respiration lente de l'invite.
     const float breath = 0.35f + 0.65f * anim::pulse(now, 2800);
