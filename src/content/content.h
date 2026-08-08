@@ -1,6 +1,7 @@
 // Accès typé au contenu généré (langue, figure).
 #pragma once
 
+#include "hexagram_details_data.h"
 #include "hexagrams_data.h"
 
 namespace daoa {
@@ -17,6 +18,10 @@ inline const char* title(const HexagramInfo& h, Lang l) {
 
 inline const char* description(const HexagramInfo& h, Lang l) {
     return l == Lang::kFr ? h.descFr : h.descEn;
+}
+
+inline const HexagramDetail& detail(uint8_t kingWen) {
+    return kHexagramDetails[kingWen - 1];
 }
 
 }  // namespace daoa

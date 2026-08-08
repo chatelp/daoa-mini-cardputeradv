@@ -20,8 +20,10 @@ daoa::Key readKey() {
     for (char c : state.word) {
         switch (c) {
             case ' ': return daoa::Key::kAction;
-            case ',': return daoa::Key::kPrev;
-            case '/': return daoa::Key::kNext;
+            case ',': return daoa::Key::kPrev;   // ←
+            case '/': return daoa::Key::kNext;   // →
+            case ';': return daoa::Key::kUp;     // ↑
+            case '.': return daoa::Key::kDown;   // ↓
             case 'l': return daoa::Key::kLang;
             case '`': return daoa::Key::kReset;
             default: break;

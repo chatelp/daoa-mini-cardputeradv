@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "../anim/easing.h"
 #include "../content/content.h"
@@ -12,7 +13,7 @@
 namespace daoa {
 
 // Entrées abstraites ; le mapping clavier vit dans main.cpp / main_sdl.cpp.
-enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kLang, kReset };
+enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kUp, kDown, kLang, kReset };
 
 class App {
   public:
@@ -30,7 +31,15 @@ class App {
     lgfx::LGFX_Sprite& frame() { return frame_; }
 
   private:
-    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kPromo };
+    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kPromo };
+
+    // Une ligne du document de lecture détaillée : pointe dans le corpus
+    // constant (aucune copie de texte), avec un style titre/corps.
+    struct DocLine {
+        const char* text;
+        uint16_t len;
+        bool title;
+    };
 
     void switchTo(Screen s, uint32_t now);
     bool ensureFrame();
@@ -39,7 +48,10 @@ class App {
     void drawWelcome(uint32_t now);
     void drawCasting(uint32_t now);
     void drawResult(uint32_t now);
+    void drawDetail(uint32_t now);
     void drawPromo(uint32_t now);
+    void buildDetailDoc();
+    void appendDocText(const char* text, bool title);
     void drawCastLine(int index, LineValue v, float t, uint32_t now);
     void drawMiniFigure(int x, int yTop, bool complementary, uint32_t now);
     void drawBottomBar(const char* caption, bool showDots, uint32_t now);
@@ -54,6 +66,11 @@ class App {
     anim::Timeline reveal_;   // révélation de la dernière ligne tirée
     int revealIndex_ = -1;
     uint32_t completeAtMs_ = 0;
+
+    // Lecture détaillée (textes du corpus Daoa 2).
+    uint8_t detailNumber_ = 1;
+    std::vector<DocLine> doc_;
+    int docPage_ = 0;
 
     lgfx::LGFX_Sprite frame_;
     bool frameReady_ = false;

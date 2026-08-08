@@ -14,6 +14,8 @@ constexpr uint32_t kEnterFadeMs = 240;
 constexpr uint32_t kRevealMs = 420;
 constexpr uint32_t kAutoResultDelayMs = 800;
 constexpr int kCenterX = theme::kWidth / 2;
+constexpr int kDetailLinesPerPage = 6;
+constexpr int kDetailTextWidth = 216;
 
 // URL encodée dans le QR promo ; le site route lui-même FR/EN.
 constexpr const char* kPromoUrl = "https://daoa.app";
@@ -31,6 +33,18 @@ struct Strings {
     const char* promoTagline;
     const char* promoPlatforms;
     const char* promoBackHint;
+    const char* detailPortrait;
+    const char* detailJudgment;
+    const char* detailImage;
+    const char* const* detailLineTitles;  // 6 titres, bas → haut
+    const char* detailNavHint;
+};
+
+constexpr const char* kLineTitlesFr[6] = {
+    "trait 1 · en bas", "trait 2", "trait 3", "trait 4", "trait 5", "trait 6 · en haut",
+};
+constexpr const char* kLineTitlesEn[6] = {
+    "line 1 · bottom", "line 2", "line 3", "line 4", "line 5", "line 6 · top",
 };
 
 constexpr Strings kStringsFr{
@@ -42,10 +56,15 @@ constexpr Strings kStringsFr{
     "figure obtenue",
     "complémentaire",
     "figure stable",
-    "espace · esc",
+    "↓ texte · espace · esc",
     "L'app complète du Yi Jing",
     "iPhone · Android",
     "esc · accueil",
+    "portrait",
+    "jugement",
+    "image",
+    kLineTitlesFr,
+    "↑ ↓ · esc",
 };
 
 constexpr Strings kStringsEn{
@@ -57,10 +76,15 @@ constexpr Strings kStringsEn{
     "first figure",
     "complementary",
     "stable figure",
-    "space · esc",
+    "↓ text · space · esc",
     "The full Yi Jing app",
     "iPhone · Android",
     "esc · home",
+    "portrait",
+    "judgment",
+    "image",
+    kLineTitlesEn,
+    "↑ ↓ · esc",
 };
 
 const Strings& str(Lang l) { return l == Lang::kFr ? kStringsFr : kStringsEn; }
@@ -105,6 +129,7 @@ int drawWrapped(lgfx::LGFX_Sprite& s, const char* text, int x, int y,
 }  // namespace
 
 void App::switchTo(Screen s, uint32_t now) {
+    const Screen previous = screen_;
     screen_ = s;
     enter_.start(now, kEnterFadeMs);
     if (s == Screen::kCasting) {
@@ -112,16 +137,21 @@ void App::switchTo(Screen s, uint32_t now) {
         revealIndex_ = -1;
         completeAtMs_ = 0;
     }
-    if (s == Screen::kResult) resultPage_ = 0;
+    // Ne pas revenir en page 0 quand on rentre de la lecture détaillée.
+    if (s == Screen::kResult && previous != Screen::kDetail) resultPage_ = 0;
+    if (s == Screen::kDetail) buildDetailDoc();
 }
 
 void App::handleKey(Key k, uint32_t now) {
     if (k == Key::kLang) {
         lang_ = (lang_ == Lang::kFr) ? Lang::kEn : Lang::kFr;
+        if (screen_ == Screen::kDetail) buildDetailDoc();
         return;
     }
     if (k == Key::kReset) {
-        switchTo(Screen::kWelcome, now);
+        // Depuis la lecture détaillée, esc revient au résultat ; partout
+        // ailleurs, à l'accueil.
+        switchTo(screen_ == Screen::kDetail ? Screen::kResult : Screen::kWelcome, now);
         return;
     }
 
@@ -149,10 +179,31 @@ void App::handleKey(Key k, uint32_t now) {
             if (k == Key::kNext || k == Key::kPrev) {
                 resultPage_ = resultPage_ == 0 ? 1 : 0;
                 enter_.start(now, 180);
+            } else if (k == Key::kDown) {
+                detailNumber_ = resultPage_ == 1 ? session_.complementaryNumber()
+                                                 : session_.originalNumber();
+                switchTo(Screen::kDetail, now);
             } else if (k == Key::kAction) {
                 switchTo(Screen::kPromo, now);
             }
             break;
+
+        case Screen::kDetail: {
+            const int pageCount =
+                static_cast<int>((doc_.size() + kDetailLinesPerPage - 1) / kDetailLinesPerPage);
+            if (k == Key::kDown || k == Key::kAction || k == Key::kNext) {
+                if (docPage_ < pageCount - 1) {
+                    ++docPage_;
+                    enter_.start(now, 150);
+                }
+            } else if (k == Key::kUp || k == Key::kPrev) {
+                if (docPage_ > 0) {
+                    --docPage_;
+                    enter_.start(now, 150);
+                }
+            }
+            break;
+        }
 
         case Screen::kPromo:
             if (k == Key::kAction) switchTo(Screen::kWelcome, now);
@@ -179,6 +230,7 @@ void App::renderFrame(uint32_t now) {
         case Screen::kWelcome: drawWelcome(now); break;
         case Screen::kCasting: drawCasting(now); break;
         case Screen::kResult: drawResult(now); break;
+        case Screen::kDetail: drawDetail(now); break;
         case Screen::kPromo: drawPromo(now); break;
     }
 }
@@ -217,6 +269,90 @@ void App::drawWelcome(uint32_t now) {
     s.setTextDatum(textdatum_t::top_right);
     s.setTextColor(fade(anim::lerp565(theme::kBg, theme::kMuted, 0.7f), now), theme::kBg);
     s.drawString(str(lang_).langHint, 232, 8);
+}
+
+// Découpe un texte en lignes (pointeurs dans le corpus, aucune copie) à la
+// largeur de lecture, avec la fonte du corps de texte.
+void App::appendDocText(const char* text, bool title) {
+    auto& s = frame_;
+    s.setFont(&fonts::efontJA_12);
+    char candidate[200];
+    const char* lineStart = text;
+    int lineLen = 0;
+    const char* p = text;
+    while (*p != '\0') {
+        const char* wordEnd = p;
+        while (*wordEnd != '\0' && *wordEnd != ' ') ++wordEnd;
+        snprintf(candidate, sizeof(candidate), "%.*s",
+                 static_cast<int>(wordEnd - lineStart), lineStart);
+        if (lineLen == 0 || s.textWidth(candidate) <= kDetailTextWidth) {
+            lineLen = static_cast<int>(wordEnd - lineStart);
+        } else {
+            doc_.push_back({lineStart, static_cast<uint16_t>(lineLen), title});
+            lineStart = p;
+            lineLen = static_cast<int>(wordEnd - p);
+        }
+        p = (*wordEnd == ' ') ? wordEnd + 1 : wordEnd;
+    }
+    if (lineLen > 0) doc_.push_back({lineStart, static_cast<uint16_t>(lineLen), title});
+}
+
+void App::buildDetailDoc() {
+    if (!ensureFrame()) return;
+    doc_.clear();
+    docPage_ = 0;
+    const HexagramDetail& d = detail(detailNumber_);
+    const Strings& t = str(lang_);
+    const bool fr = lang_ == Lang::kFr;
+
+    appendDocText(t.detailPortrait, true);
+    appendDocText(fr ? d.generalFr : d.generalEn, false);
+    appendDocText(t.detailJudgment, true);
+    appendDocText(fr ? d.judgmentFr : d.judgmentEn, false);
+    appendDocText(t.detailImage, true);
+    appendDocText(fr ? d.imageFr : d.imageEn, false);
+    for (int i = 0; i < 6; ++i) {
+        appendDocText(t.detailLineTitles[i], true);
+        appendDocText(fr ? d.linesFr[i] : d.linesEn[i], false);
+    }
+}
+
+void App::drawDetail(uint32_t now) {
+    auto& s = frame_;
+    const uint16_t ink = fade(theme::kFg, now);
+    const uint16_t stone = fade(theme::kMuted, now);
+    const HexagramInfo& h = hexagram(detailNumber_);
+    const int pageCount =
+        static_cast<int>((doc_.size() + kDetailLinesPerPage - 1) / kDetailLinesPerPage);
+
+    char buf[208];
+
+    // En-tête : figure et pagination.
+    s.setFont(&fonts::efontJA_12);
+    s.setTextColor(stone, theme::kBg);
+    s.setTextDatum(textdatum_t::top_left);
+    snprintf(buf, sizeof(buf), "%d · %s · %s", h.number, h.pinyin, title(h, lang_));
+    s.drawString(buf, 12, 8);
+    s.setTextDatum(textdatum_t::top_right);
+    snprintf(buf, sizeof(buf), "%d/%d", docPage_ + 1, pageCount);
+    s.drawString(buf, 228, 8);
+
+    // Corps de page.
+    s.setTextDatum(textdatum_t::top_left);
+    const size_t first = static_cast<size_t>(docPage_) * kDetailLinesPerPage;
+    for (int i = 0; i < kDetailLinesPerPage; ++i) {
+        const size_t idx = first + static_cast<size_t>(i);
+        if (idx >= doc_.size()) break;
+        const DocLine& line = doc_[idx];
+        snprintf(buf, sizeof(buf), "%.*s", static_cast<int>(line.len), line.text);
+        s.setTextColor(line.title ? stone : ink, theme::kBg);
+        s.drawString(buf, 12, 26 + i * 15);
+    }
+
+    // Barre du bas.
+    s.setTextDatum(textdatum_t::bottom_right);
+    s.setTextColor(stone, theme::kBg);
+    s.drawString(str(lang_).detailNavHint, 228, 134);
 }
 
 void App::drawPromo(uint32_t now) {

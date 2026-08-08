@@ -110,15 +110,25 @@ int runShots() {
     app.renderFrame(7200);                                  // bascule auto
     shot(app, 7600, "04_resultat_en.bmp");
 
-    app.handleKey(Key::kNext, 7700);
-    shot(app, 8100, "05_complementaire_en.bmp");
+    app.handleKey(Key::kDown, 7650);                        // → lecture détaillée
+    shot(app, 8000, "05_texte_p1_en.bmp");
+    app.handleKey(Key::kDown, 8050);
+    shot(app, 8400, "06_texte_p2_en.bmp");
+    app.handleKey(Key::kReset, 8450);                       // esc → résultat
 
-    app.handleKey(Key::kLang, 8200);
-    app.handleKey(Key::kNext, 8250);                        // retour page 1
-    shot(app, 8600, "06_resultat_fr.bmp");
+    app.handleKey(Key::kNext, 8500);
+    shot(app, 8900, "07_complementaire_en.bmp");
 
-    app.handleKey(Key::kAction, 8700);                      // → promo
-    shot(app, 9100, "07_promo.bmp");
+    app.handleKey(Key::kLang, 9000);
+    app.handleKey(Key::kNext, 9050);                        // retour page 1
+    shot(app, 9400, "08_resultat_fr.bmp");
+
+    app.handleKey(Key::kDown, 9450);                        // détail FR
+    shot(app, 9800, "09_texte_p1_fr.bmp");
+    app.handleKey(Key::kReset, 9850);
+
+    app.handleKey(Key::kAction, 9900);                      // → promo
+    shot(app, 10300, "10_promo.bmp");
 
     return 0;
 }
@@ -173,6 +183,8 @@ int runInteractive(bool* running) {
         {SDL_SCANCODE_RETURN, daoa::Key::kAction},
         {SDL_SCANCODE_LEFT, daoa::Key::kPrev},
         {SDL_SCANCODE_RIGHT, daoa::Key::kNext},
+        {SDL_SCANCODE_UP, daoa::Key::kUp},
+        {SDL_SCANCODE_DOWN, daoa::Key::kDown},
         {SDL_SCANCODE_L, daoa::Key::kLang},
         {SDL_SCANCODE_ESCAPE, daoa::Key::kReset},
     };
