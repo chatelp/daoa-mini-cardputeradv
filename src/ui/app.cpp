@@ -31,9 +31,9 @@ constexpr Strings kStringsFr{
     "espace · tirer la ligne %d / 6",
     "espace · lire la figure",
     "figure obtenue",
-    "figure complémentaire",
-    "figure stable · sans mutation",
-    "l · esc",
+    "complémentaire",
+    "figure stable",
+    "L english · esc",
 };
 
 constexpr Strings kStringsEn{
@@ -41,10 +41,10 @@ constexpr Strings kStringsEn{
     "space · begin",
     "space · cast line %d / 6",
     "space · read the figure",
-    "the figure received",
-    "complementary figure",
-    "stable figure · no change",
-    "l · esc",
+    "first figure",
+    "complementary",
+    "stable figure",
+    "L français · esc",
 };
 
 const Strings& str(Lang l) { return l == Lang::kFr ? kStringsFr : kStringsEn; }
@@ -330,13 +330,23 @@ void App::drawResult(uint32_t now) {
 
     drawMiniFigure(184, 12, complementary, now);
 
+    // Pastilles de page sous la mini-figure : on pagine entre les deux
+    // figures affichées là (hors de la barre du bas, qui restait trop
+    // étroite pour trois éléments — retour appareil 2026-08-08).
+    {
+        const uint16_t active = fade(theme::kFg, now);
+        const uint16_t inactive = fade(anim::lerp565(theme::kBg, theme::kMuted, 0.45f), now);
+        s.fillCircle(204 - 5, 62, 2, resultPage_ == 0 ? active : inactive);
+        s.fillCircle(204 + 5, 62, 2, resultPage_ == 1 ? active : inactive);
+    }
+
     const char* caption = complementary
                               ? (stable ? t.stableCaption : t.complementCaption)
                               : t.figureCaption;
-    drawBottomBar(caption, true, now);
+    drawBottomBar(caption, false, now);
 }
 
-void App::drawBottomBar(const char* caption, bool showDots, uint32_t now) {
+void App::drawBottomBar(const char* caption, bool /*showDots*/, uint32_t now) {
     auto& s = frame_;
     const uint16_t stone = fade(theme::kMuted, now);
 
@@ -346,13 +356,6 @@ void App::drawBottomBar(const char* caption, bool showDots, uint32_t now) {
     s.drawString(caption, 12, 134);
     s.setTextDatum(textdatum_t::bottom_right);
     s.drawString(str(lang_).keysHint, 228, 134);
-
-    if (showDots) {
-        const uint16_t active = fade(theme::kFg, now);
-        const uint16_t inactive = fade(anim::lerp565(theme::kBg, theme::kMuted, 0.45f), now);
-        s.fillCircle(kCenterX - 5, 129, 2, resultPage_ == 0 ? active : inactive);
-        s.fillCircle(kCenterX + 5, 129, 2, resultPage_ == 1 ? active : inactive);
-    }
 }
 
 }  // namespace daoa
