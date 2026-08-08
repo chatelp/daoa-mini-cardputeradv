@@ -15,9 +15,10 @@ constexpr uint16_t rgb565(uint32_t rgb888) {
     return static_cast<uint16_t>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
 }
 
-// Fond noir chaud (pas un noir pur froid), texte papier, gris pierre pour
-// le secondaire, cinabre éclairci pour rester lisible sur fond sombre.
-inline constexpr uint16_t kBg = rgb565(0x0C0A08);
+// Fond noir pur (retour appareil 2026-08-08 : se fond avec la lunette de
+// l'écran), texte papier, gris pierre pour le secondaire, cinabre éclairci
+// pour rester lisible sur fond sombre.
+inline constexpr uint16_t kBg = rgb565(0x000000);
 inline constexpr uint16_t kFg = rgb565(0xECE4D2);
 inline constexpr uint16_t kMuted = rgb565(0x948B7A);
 inline constexpr uint16_t kAccent = rgb565(0xC65B42);
