@@ -24,12 +24,18 @@ Choix d'intérim : efontJA pour tout le texte latin, efontCN_24_b pour les
 hanzi avec bascule efontJA_24_b pour les figures 33/43/44. La fonte dédiée
 (64 glyphes + latin soigné, format VLW) reste l'objectif de la phase 1.5.
 
-## Phase 1 — MVP
+## Phase 1 — MVP — QUASI COMPLET (2026-08-08)
 
-- [ ] Rendu résultat complet (figure complémentaire, mutations, FR/EN)
-- [ ] Écran promo + QR code vers l'app
-- [ ] Validation visuelle simulateur par le product owner
-- [ ] Validation sur appareil (couleurs, lisibilité, clavier)
+- [x] Rendu résultat complet (figure complémentaire, mutations, FR/EN)
+- [x] Écran promo + QR code vers https://daoa.app (ricmoo/QRCode, v2 ECC M)
+- [x] Anglais par défaut ; bascule « L » indiquée sur l'accueil
+- [x] Thème sombre (noir pur — retours appareil), fonte minimale 12 px
+- [x] Lecture détaillée des figures (corpus Daoa 2 extrait de daoa-ios :
+      portrait + Jugement + Image + 6 traits, 64/64 bilingue, ~173 Ko) —
+      ↓ depuis le résultat, pagination ↑/↓, esc retour
+- [x] Validation sur appareil : boucle complète OK (flash série direct)
+- [ ] Test de scan réel du QR sur l'écran physique
+- [ ] Validation finale du product owner sur l'ensemble du parcours
 
 ## Phase 1.5 — Rituel et finitions
 
