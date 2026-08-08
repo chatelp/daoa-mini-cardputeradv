@@ -1,0 +1,60 @@
+// Machine à états des écrans + rendu. Ne dépend que de lgfx:: (jamais du
+// matériel) : le même code dessine sur l'appareil et dans le simulateur SDL.
+#pragma once
+
+#include <cstdint>
+
+#include "../anim/easing.h"
+#include "../content/content.h"
+#include "../core/casting.h"
+#include "gfx.h"
+
+namespace daoa {
+
+// Entrées abstraites ; le mapping clavier vit dans main.cpp / main_sdl.cpp.
+enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kLang, kReset };
+
+class App {
+  public:
+    explicit App(RandomFn rand32) : session_(rand32) {}
+
+    void handleKey(Key k, uint32_t nowMs);
+
+    // Dessine l'image dans le sprite interne (sans l'afficher).
+    void renderFrame(uint32_t nowMs);
+
+    // Dessine puis pousse vers l'écran.
+    void render(lgfx::LGFX_Device& dev, uint32_t nowMs);
+
+    // Accès au dernier rendu (captures du simulateur).
+    lgfx::LGFX_Sprite& frame() { return frame_; }
+
+  private:
+    enum class Screen : uint8_t { kWelcome, kCasting, kResult };
+
+    void switchTo(Screen s, uint32_t now);
+    bool ensureFrame();
+    uint16_t fade(uint16_t c, uint32_t now) const;
+
+    void drawWelcome(uint32_t now);
+    void drawCasting(uint32_t now);
+    void drawResult(uint32_t now);
+    void drawCastLine(int index, LineValue v, float t, uint32_t now);
+    void drawMiniFigure(int x, int yTop, bool complementary, uint32_t now);
+    void drawBottomBar(const char* caption, bool showDots, uint32_t now);
+
+    CastSession session_;
+    Screen screen_ = Screen::kWelcome;
+    Lang lang_ = Lang::kFr;
+    uint8_t resultPage_ = 0;  // 0 = figure obtenue, 1 = complémentaire
+
+    anim::Timeline enter_;    // fondu d'entrée d'écran
+    anim::Timeline reveal_;   // révélation de la dernière ligne tirée
+    int revealIndex_ = -1;
+    uint32_t completeAtMs_ = 0;
+
+    lgfx::LGFX_Sprite frame_;
+    bool frameReady_ = false;
+};
+
+}  // namespace daoa

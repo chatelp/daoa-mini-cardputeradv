@@ -1,0 +1,54 @@
+# UX et rendu
+
+Standard : celui de Daoa 2 — calme, précis, premium, typographique. L'écran
+fait 240 × 135 : chaque pixel compte, l'ambition passe par la sobriété, la
+typo anti-aliasée et le mouvement, pas par la densité.
+
+## Écrans
+
+1. **Accueil** — marque « Daoa » + sous-titre, respiration lente (léger
+   pulse d'opacité), « appuyer pour commencer ».
+2. **Tirage** — les 6 traits se révèlent de bas en haut, un par pression.
+   Chaque révélation : montée en fondu + easing, marque de mutation (point /
+   croix discrète) pour 6 et 9. Micro-son optionnel par le haut-parleur.
+3. **Résultat** — caractère chinois en grand, pinyin, nom, description
+   courte ; lignes mutables signalées ; accès à la figure complémentaire
+   (pagination). Bascule FR/EN par touche.
+4. **Promo** — « Daoa, l'app complète sur iPhone » + QR code (petite lib C
+   type ricmoo/QRCode ; QR version 2-3 lisible sur 135 px de haut).
+
+## Techniques de rendu (tout M5GFX/LovyanGFX)
+
+- **Sprites plein écran** (240 × 135 × 16 bits = 65 Ko en SRAM) : tout se
+  dessine hors écran puis se pousse en un bloc — zéro scintillement.
+- **Fontes** (état vérifié au `--fonttest` du simulateur) : les DejaVu de
+  lgfx sont ASCII pur (pas d'accents) — réservées au wordmark « Daoa ».
+  Texte courant FR/EN : **efontJA** (latin accentué complet). Hanzi :
+  **efontCN_24_b**, avec bascule efontJA_24_b pour 遯 (33), 夬 (43) et
+  姤 (44), absents d'efontCN. Cible phase 1.5 : fontes VLW dédiées
+  anti-aliasées (latin soigné + sous-ensemble exact des 64 glyphes),
+  jamais une CJK complète.
+- **Animations** : easing maison (`anim/easing.h` — cubic/quint out,
+  pulse), pilotées par le temps (`millis`), jamais par des délais bloquants.
+  Le simulateur SDL permet de régler les courbes à l'œil sur Mac.
+- **Palette** : encre sur papier (cohérente avec Daoa 2) — fond papier
+  chaud, encre presque noire, un seul accent discret. Définie dans
+  `ui/theme.h`, à valider visuellement au simulateur.
+
+## Entrées
+
+| Action | Appareil (clavier) | Simulateur (SDL) |
+|---|---|---|
+| Avancer / tirer une ligne | Espace ou Entrée | Espace / Entrée |
+| Page précédente / suivante | `,` / `/` | ← / → |
+| Bascule FR/EN | `l` | `l` |
+| Recommencer | `` ` `` (Esc) | Échap |
+
+Pas de saisie de texte nulle part.
+
+## Boucle de validation visuelle
+
+1. Itérer dans le simulateur (`pio run -e sim`, capture `--shot`).
+2. Revue par le product owner (captures ou fenêtre SDL).
+3. Flash sur l'appareil pour valider couleurs réelles et lisibilité
+   (l'écran physique rend différemment du sim, surtout le contraste).
