@@ -87,7 +87,7 @@ void test_mutation() {
 // --- session -------------------------------------------------------------
 
 void test_session_tout_vieux_yin() {
-    g_fixed = 0b000;  // toutes les lignes = 6 (vieux yin)
+    g_fixed = 512;  // champ yang ≥ 512 → yin ; champ vieillesse 0 < 256 → vieille (6)
     CastSession s(fixedRand);
     for (int i = 0; i < 6; ++i) {
         TEST_ASSERT_FALSE(s.isComplete());
@@ -101,7 +101,7 @@ void test_session_tout_vieux_yin() {
 }
 
 void test_session_stable() {
-    g_fixed = 0b001;  // toutes les lignes = 7 (jeune yang, fixe)
+    g_fixed = 256u << 10;  // champ yang 0 < 512 → yang ; vieillesse 256 ≥ 256 → jeune (7)
     CastSession s(fixedRand);
     while (!s.isComplete()) s.castNextLine();
     TEST_ASSERT_FALSE(s.hasMovingLines());
@@ -110,7 +110,7 @@ void test_session_stable() {
 }
 
 void test_session_reset() {
-    g_fixed = 0b001;
+    g_fixed = 256u << 10;
     CastSession s(fixedRand);
     s.castNextLine();
     s.castNextLine();

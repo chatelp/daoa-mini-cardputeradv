@@ -34,3 +34,18 @@ Simulateur SDL (LovyanGFX) pour itérer le rendu sur Mac.
 
 FR et EN embarqués tous les deux, bascule par touche. Textes = contenu Daoa
 original extrait de v1 (60 premiers caractères : nom + description courte).
+
+## 2026-08-09 — Lecture du lieu (scan WiFi pondérant le tirage) — ACTÉ
+
+Le Cardputer scanne passivement le WiFi ambiant avant le tirage et en
+dérive deux lectures : la **densité du champ** (réseaux + énergie des
+signaux) et son **agitation** (dispersion des canaux, variance). Elles
+pondèrent les trois pièces de façon bornée : biais de pièce β ≤ ±0,05
+(yin/yang), vieillissement γ ≤ 0,04 (mutabilité). Le TRNG reste la source ;
+aux plafonds, P(vieux yin) reste dans [9 %, 16 %]. Jamais de connexion,
+radio coupée après le scan, rien de stocké ni transmis, aucun SSID montré.
+**Activée par défaut** (fonction différenciatrice de l'objet), coupable
+dans les réglages (touche `s`). Formule documentée dans docs/03 et
+résumée dans l'aide. Interface : champ de particules vivant pendant le
+tirage — graphique, jamais un graphe. Amende les deux verrous historiques
+(hors-ligne strict ; tirage sans influence) — CLAUDE.md à jour.

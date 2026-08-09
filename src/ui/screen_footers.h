@@ -27,6 +27,8 @@ enum FooterId {
     kFooterDoc,
     kFooterHelp,
     kFooterStructure,
+    kFooterSettings,
+    kFooterField,
     kFooterCount,
 };
 
@@ -38,6 +40,9 @@ inline constexpr FooterSpec kFooterSpecs[kFooterCount] = {
     {"lecture", nullptr, {{"↑↓", nullptr}, {"esc", nullptr}, {nullptr, nullptr}}, 2},
     {"aide", nullptr, {{"esc", "home"}, {nullptr, nullptr}, {nullptr, nullptr}}, 1},
     {"structure", "structure", {{"↑↓", nullptr}, {"esc", nullptr}, {nullptr, nullptr}}, 2},
+    {"reglages", nullptr,
+     {{"↑↓", nullptr}, {"space", "toggle"}, {"esc", nullptr}}, 3},
+    {"champ-technique", nullptr, {{"w", nullptr}, {"esc", nullptr}, {nullptr, nullptr}}, 2},
 };
 
 }  // namespace daoa::ui

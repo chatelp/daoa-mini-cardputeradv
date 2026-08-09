@@ -5,11 +5,16 @@
 
 #include "ui/app.h"
 
+namespace daoa {
+extern const AmbientHost kDeviceAmbientHost;   // ambient/ambient_host_device.cpp
+extern const SoundHost kDeviceSoundHost;       // sound/ui_sound_device.cpp
+}  // namespace daoa
+
 namespace {
 
 uint32_t trng() { return esp_random(); }
 
-daoa::App app(trng);
+daoa::App app(trng, daoa::kDeviceAmbientHost, daoa::kDeviceSoundHost);
 
 daoa::Key readKey() {
     if (!M5Cardputer.Keyboard.isChange() || !M5Cardputer.Keyboard.isPressed()) {
@@ -26,6 +31,8 @@ daoa::Key readKey() {
             case '.': return daoa::Key::kDown;   // ↓
             case 'l': return daoa::Key::kLang;
             case 'h': return daoa::Key::kHelp;
+            case 's': return daoa::Key::kSettings;
+            case 'w': return daoa::Key::kField;
             case '`': return daoa::Key::kReset;
             default: break;
         }

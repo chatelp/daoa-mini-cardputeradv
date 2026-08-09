@@ -54,3 +54,21 @@ Pas de saisie de texte nulle part.
 2. Revue par le product owner (captures ou fenêtre SDL).
 3. Flash sur l'appareil pour valider couleurs réelles et lisibilité
    (l'écran physique rend différemment du sim, surtout le contraste).
+
+## Lecture du lieu, réglages, sons (2026-08-09)
+
+- **Rituel** : à l'entrée du tirage, ~1,4 s de « lecture du lieu… »
+  (le temps réel du scan devient le rituel), puis le champ se révèle.
+- **Champ ambiant** : une particule 2×2 par réseau perçu, position liée
+  au canal, luminance à l'énergie du signal, dérive lente et respiration
+  déphasées (nombre d'or) — vivant, jamais un graphe. En pierre, derrière
+  la figure.
+- **Vue technique** (touche `w`, depuis tirage ou résultat) : réseaux,
+  canaux, dBm, densité/agitation, β/γ, probabilités résultantes — la
+  transparence est la condition de la règle. Public geek assumé.
+- **Réglages** (touche `s`) : deux lignes (lecture du lieu, sons),
+  ↑↓ sélection, espace bascule, persistant (NVS).
+- **Sons** : sinusoïdes brèves à décroissance douce (PCM, jamais tone()) —
+  les six traits égrènent une pentatonique montante (A3→A4), doublage
+  grave sur les mutables, résolution E4→A3 au résultat, tick discret sur
+  les pages, carillon en fin de lecture du lieu. Volume bas, coupables.

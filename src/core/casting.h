@@ -42,6 +42,8 @@ LineValue castLineThreeCoins(RandomFn rand32);
 // d'abord transformées (figure complémentaire).
 uint8_t kingWenNumber(const LineValue* lines, bool afterMutation);
 
+struct CastWeights;  // core/ambient.h
+
 // Machine à états du tirage : 6 lignes, de bas en haut, une par appel.
 class CastSession {
   public:
@@ -50,6 +52,15 @@ class CastSession {
     explicit CastSession(RandomFn rand32) : rand_(rand32) {}
 
     void reset() { count_ = 0; }
+
+    // Pondérations de la lecture du lieu pour le prochain tirage.
+    // β = γ = 0 (défaut) ⇒ trois pièces traditionnelles exactes.
+    void setWeights(float yangBias, float agingProb) {
+        yangBias_ = yangBias;
+        agingProb_ = agingProb;
+    }
+    float yangBias() const { return yangBias_; }
+    float agingProb() const { return agingProb_; }
 
     // Tire la ligne suivante. Renvoie false si le tirage est déjà complet.
     bool castNextLine();
@@ -70,6 +81,8 @@ class CastSession {
     RandomFn rand_;
     LineValue lines_[kLineCount] = {};
     size_t count_ = 0;
+    float yangBias_ = 0.f;
+    float agingProb_ = 0.f;
 };
 
 }  // namespace daoa

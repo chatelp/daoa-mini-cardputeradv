@@ -27,6 +27,46 @@ bool g_shotMode = false;
 bool g_fontTest = false;
 std::string g_shotDir;
 
+// Hôte ambiant simulé : un scan de ~1,4 s qui « découvre » des réseaux
+// plausibles, déterministes par graine. Sons : muets sur Mac.
+uint32_t g_scanStart = 0;
+bool g_scanPending = false;
+
+void simStartScan(uint32_t nowMs) {
+    g_scanStart = nowMs;
+    g_scanPending = true;
+}
+
+int simPollScan(uint32_t nowMs, daoa::ApReading* out, int max) {
+    if (!g_scanPending || nowMs - g_scanStart < 1350) return -1;
+    g_scanPending = false;
+    uint32_t st = (g_seed ? g_seed : 1u) ^ 0xA5A5A5A5u;
+    auto nx = [&st]() {
+        st ^= st << 13;
+        st ^= st >> 17;
+        st ^= st << 5;
+        return st;
+    };
+    const int n = 3 + static_cast<int>(nx() % 9);  // 3..11 réseaux
+    const int count = n < max ? n : max;
+    for (int i = 0; i < count; ++i) {
+        out[i].rssi = static_cast<int8_t>(-40 - static_cast<int>(nx() % 50));
+        out[i].channel = static_cast<uint8_t>(1 + (nx() % 13));
+    }
+    return count;
+}
+
+bool g_ambientEnabled = true;
+bool g_soundEnabled = true;
+bool simLoadEnabled() { return g_ambientEnabled; }
+void simSaveEnabled(bool e) { g_ambientEnabled = e; }
+bool simLoadSound() { return g_soundEnabled; }
+void simSaveSound(bool e) { g_soundEnabled = e; }
+
+const daoa::AmbientHost kSimAmbientHost{simStartScan, simPollScan, simLoadEnabled,
+                                        simSaveEnabled, simLoadSound, simSaveSound};
+const daoa::SoundHost kSimSoundHost{nullptr};
+
 // PRNG xorshift déterministe pour le simulateur (l'appareil, lui, utilise
 // le TRNG matériel — voir src/main.cpp).
 uint32_t simRand() {
@@ -91,58 +131,71 @@ void shot(daoa::App& app, uint32_t t, const char* name) {
 
 // Rejoue un tirage complet avec un aléa déterministe et capture chaque écran.
 int runShots() {
-    daoa::App app(simRand);
+    daoa::App app(simRand, kSimAmbientHost, kSimSoundHost);
     using daoa::Key;
 
     shot(app, 1400, "01_accueil.bmp");
 
-    app.handleKey(Key::kAction, 1500);                      // → tirage
-    app.handleKey(Key::kAction, 2000);
-    app.handleKey(Key::kAction, 2700);
-    app.handleKey(Key::kAction, 3400);
-    shot(app, 3700, "02_tirage_revelation.bmp");            // 3e trait en cours
+    app.handleKey(Key::kAction, 1500);                      // → tirage, scan lancé
+    shot(app, 2300, "02_lecture_du_lieu.bmp");              // le lieu se lit
+    app.renderFrame(3000);                                  // scan posé, champ né
 
-    app.handleKey(Key::kAction, 4200);
-    app.handleKey(Key::kAction, 4900);
-    app.handleKey(Key::kAction, 5600);                      // 6e trait
-    shot(app, 6100, "03_tirage_complet.bmp");
+    app.handleKey(Key::kAction, 3100);
+    app.handleKey(Key::kAction, 3700);
+    app.handleKey(Key::kAction, 4300);
+    shot(app, 4600, "03_tirage_revelation.bmp");            // 3 traits + champ
 
-    app.renderFrame(7200);                                  // bascule auto
-    shot(app, 7600, "04_resultat_en.bmp");
+    app.handleKey(Key::kAction, 5200);
+    app.handleKey(Key::kAction, 5800);
+    app.handleKey(Key::kAction, 6400);                      // 6e trait
+    shot(app, 6700, "04_tirage_complet.bmp");
 
-    app.handleKey(Key::kDown, 7650);                        // → lecture détaillée
-    shot(app, 8000, "05_texte_p1_en.bmp");
-    app.handleKey(Key::kDown, 8050);
-    shot(app, 8400, "06_texte_p2_en.bmp");
-    app.handleKey(Key::kReset, 8450);                       // esc → résultat
+    app.handleKey(Key::kField, 6800);                       // vue technique
+    shot(app, 7200, "05_champ_technique_en.bmp");
+    app.handleKey(Key::kField, 7300);                       // retour tirage
 
-    app.handleKey(Key::kNext, 8500);
-    shot(app, 8900, "07_complementaire_en.bmp");
+    app.renderFrame(8000);                                  // bascule auto
+    shot(app, 8400, "06_resultat_en.bmp");
 
-    app.handleKey(Key::kLang, 9000);
-    app.handleKey(Key::kNext, 9050);                        // retour page 1
-    shot(app, 9400, "08_resultat_fr.bmp");
+    app.handleKey(Key::kDown, 8500);                        // → lecture détaillée
+    shot(app, 8800, "07_texte_p1_en.bmp");
+    app.handleKey(Key::kReset, 8900);                       // esc → résultat
 
-    app.handleKey(Key::kDown, 9450);                        // détail FR
-    shot(app, 9800, "09_texte_p1_fr.bmp");
-    for (uint32_t t = 9810; t <= 10400; t += 40) {
+    app.handleKey(Key::kNext, 9000);
+    shot(app, 9300, "08_complementaire_en.bmp");
+
+    app.handleKey(Key::kLang, 9400);
+    app.handleKey(Key::kNext, 9450);                        // retour page 1
+    shot(app, 9800, "09_resultat_fr.bmp");
+
+    app.handleKey(Key::kDown, 9850);                        // détail FR
+    shot(app, 10200, "10_texte_p1_fr.bmp");
+    for (uint32_t t = 10210; t <= 10800; t += 40) {
         app.handleKey(Key::kDown, t);                       // jusqu'à structure
     }
-    shot(app, 10500, "10_structure_fr.bmp");
-    app.handleKey(Key::kLang, 10550);
-    shot(app, 10900, "11_structure_en.bmp");
+    shot(app, 10900, "11_structure_fr.bmp");
     app.handleKey(Key::kLang, 10950);
-    app.handleKey(Key::kReset, 11000);                      // esc → résultat
+    shot(app, 11300, "12_structure_en.bmp");
+    app.handleKey(Key::kLang, 11350);
+    app.handleKey(Key::kReset, 11400);                      // esc → résultat
 
-    app.handleKey(Key::kAction, 11100);                     // → promo
-    shot(app, 11500, "12_promo.bmp");
+    app.handleKey(Key::kSettings, 11500);                   // réglages
+    shot(app, 11900, "13_reglages_fr.bmp");
+    app.handleKey(Key::kDown, 11950);                       // ligne sons
+    app.handleKey(Key::kAction, 12000);                     // bascule
+    shot(app, 12400, "14_reglages_sons_coupes_fr.bmp");
+    app.handleKey(Key::kAction, 12050);                     // rétablit
+    app.handleKey(Key::kReset, 12100);                      // esc → résultat
 
-    app.handleKey(Key::kHelp, 11600);                       // aide (FR ici)
-    shot(app, 12000, "13_aide_p1_fr.bmp");
-    for (uint32_t t = 12050; t <= 12350; t += 50) {
+    app.handleKey(Key::kAction, 12200);                     // → promo
+    shot(app, 12600, "15_promo.bmp");
+
+    app.handleKey(Key::kHelp, 12700);                       // aide (FR ici)
+    shot(app, 13100, "16_aide_p1_fr.bmp");
+    for (uint32_t t = 13150; t <= 13500; t += 50) {
         app.handleKey(Key::kDown, t);                       // jusqu'en bas
     }
-    shot(app, 12500, "14_aide_touches_fr.bmp");
+    shot(app, 13700, "17_aide_touches_fr.bmp");
 
     return 0;
 }
@@ -179,7 +232,7 @@ int runFontTest() {
     s.drawString("遯夬姤", 190, 40);
     s.setFont(&fonts::efontJA_12);
     printf("larg. '…'=%d  '.'=%d  'a'=%d px\n", s.textWidth("…"), s.textWidth("."), s.textWidth("a"));
-    daoa::App tmp(simRand);  // inutilisé : garde la parité de liens
+    daoa::App tmp(simRand, kSimAmbientHost, kSimSoundHost);  // parité de liens
     (void)tmp;
     writeBmp(s, g_shotDir + "/00_fonttest.bmp");
     printf("capture : %s/00_fonttest.bmp\n", g_shotDir.c_str());
@@ -190,7 +243,7 @@ int runInteractive(bool* running) {
     static LGFX lcd(daoa::theme::kWidth, daoa::theme::kHeight, 3);
     lcd.init();
 
-    daoa::App app(simRand);
+    daoa::App app(simRand, kSimAmbientHost, kSimSoundHost);
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     Uint8 prev[SDL_NUM_SCANCODES] = {0};
 
@@ -203,6 +256,8 @@ int runInteractive(bool* running) {
         {SDL_SCANCODE_DOWN, daoa::Key::kDown},
         {SDL_SCANCODE_L, daoa::Key::kLang},
         {SDL_SCANCODE_H, daoa::Key::kHelp},
+        {SDL_SCANCODE_S, daoa::Key::kSettings},
+        {SDL_SCANCODE_W, daoa::Key::kField},
         {SDL_SCANCODE_ESCAPE, daoa::Key::kReset},
     };
 

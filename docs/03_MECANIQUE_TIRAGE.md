@@ -56,3 +56,31 @@ script fait la conversion vers notre convention bit 0 = bas.
 - Complémentaire : mutation 6→7 / 9→8, identité sans ligne mutable,
   cas connu avec mutation.
 - La machine à états : 6 tirages exactement, pas de 7e, reset propre.
+
+## Lecture du lieu (décision 2026-08-09)
+
+Avant chaque tirage, si le réglage est actif (défaut : oui), l'appareil
+fait un **scan WiFi passif** (jamais de connexion ; radio coupée sitôt le
+scan fini ; seuls RSSI et canal sont lus — ni SSID ni BSSID ne sont
+collectés ; rien n'est stocké ni transmis). Le scan est réduit à :
+
+- **densité** ∈ [0,1] : ½ × (nb réseaux / 10, saturé) + ½ × énergie
+  moyenne (RSSI normalisé de −90 → 0 à −40 → 1) ;
+- **agitation** ∈ [0,1] : ½ × étalement des canaux + ½ × variance des
+  énergies (normalisée à σ = 0,3).
+
+Pondérations bornées, construction équivalente aux trois pièces en deux
+Bernoulli (nature puis mutabilité) — biaiser la pièce elle-même serait
+sans effet, la parité de trois pièces étant insensible au premier ordre :
+
+- P(yang) = 0,5 + β, avec **β = (densité − 0,5) × 0,1 ∈ [−0,05, +0,05]** ;
+- P(vieille) = 0,25 + γ, avec **γ = agitation × 0,04 ∈ [0, 0,04]**.
+
+À β = γ = 0 (réglage coupé, ou champ neutre) la distribution est
+exactement la traditionnelle. Aux plafonds, P(vieux yin) reste dans
+[11,25 %, 15,95 %]. Le TRNG matériel reste l'unique source d'aléa
+(seuils exacts 512/1024 et 256/1024 sur ses bits). La touche `w` affiche
+la vue technique : réseaux, valeurs, β, γ et probabilités résultantes.
+
+Tests : bornes, monotonie, neutralité exacte à poids nuls, effet plafonné
+(`test/test_ambient/`).

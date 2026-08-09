@@ -61,3 +61,19 @@ hanzi avec bascule efontJA_24_b pour les figures 33/43/44. La fonte dédiée
 - [ ] Son discret (ES8311), volume faible par défaut
 - [ ] Light-sleep / extinction écran en veille
 - [ ] Option : geste IMU (secouer) pour tirer une ligne
+
+## Phase 2 — Lecture du lieu + sons — FAIT (2026-08-09)
+
+- [x] Doctrine amendée (hors-ligne strict → scan passif borné ; influence
+      documentée/désactivable, activée par défaut)
+- [x] core/ambient : densité/agitation → β ≤ ±0,05, γ ≤ 0,04, construction
+      deux-Bernoulli équivalente aux trois pièces, 5 tests
+- [x] Scan WiFi réel (radio coupée après), hôte simulé côté Mac
+- [x] Champ de particules vivant + rituel « lecture du lieu… »
+- [x] Vue technique (w) : réseaux, valeurs, β/γ, probabilités
+- [x] Réglages (s) : lecture du lieu + sons, persistants (NVS)
+- [x] Sons PCM doux (pentatonique des traits, mutations, résolution, ticks)
+- [x] Aide enrichie (section lecture du lieu + touches s/w)
+- [x] Partitions max_app_8MB (pile WiFi) — flash 41 % de 8 Mo
+- [ ] Validation sur appareil : scan réel, rendu du champ, écoute des sons
+- [ ] Handoff v3 à Claude Design : langage visuel du champ + écran réglages

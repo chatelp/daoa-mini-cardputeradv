@@ -34,6 +34,8 @@ inline constexpr KeyLabelEntry kKeyLabels[] = {
     {"drawn", "figure obtenue", "first figure"},    // 14
     {"other", "complémentaire", "complementary"},   // 14
     {"stable", "figure stable", "stable figure"},   // 13 (extension)
+    {"settings", "réglages", "settings"},           // 8  (extension)
+    {"toggle", "basculer", "toggle"},               // 8  (extension)
 };
 
 // Résout un identifiant. Une chaîne inconnue de la table passe telle

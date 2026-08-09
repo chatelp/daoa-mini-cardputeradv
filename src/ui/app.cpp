@@ -1,5 +1,6 @@
 #include "app.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 
@@ -56,6 +57,16 @@ struct Strings {
     const char* promoTag2;
     const char* posUpper;       // écran structure
     const char* posLower;
+    const char* scanText;       // invite pendant la lecture du lieu
+    const char* fieldTitle;     // en-tête de la vue technique
+    const char* fieldOffText;   // vue technique quand la lecture est coupée
+    const char* rowAmbient;     // réglages : nom de la ligne
+    const char* rowSound;
+    const char* stateOnAmbient;
+    const char* stateOffAmbient;
+    const char* stateOnSound;
+    const char* stateOffSound;
+    const char* const* ambientBody;  // 3 lignes d'explication honnête
     const char* detailGloss;    // section « glose » quand elle est tronquée
     const char* detailPortrait;
     const char* detailJudgment;
@@ -92,6 +103,12 @@ constexpr HelpSection kHelpFr[] = {
      "Les textes de chaque figure sont des formulations propres à Daoa, "
      "fidèles aux traductions du domaine public de James Legge (1882) et "
      "Charles de Harlez (1889)."},
+    {"la lecture du lieu",
+     "Avant chaque tirage, l'appareil écoute le lieu : un scan WiFi passif, "
+     "jamais connecté, dont rien n'est gardé. La densité du champ penche "
+     "yin ou yang (± 5 % au plus), son agitation rend les mutations un peu "
+     "plus probables (+ 4 % au plus). Le hasard matériel reste maître. "
+     "w affiche le détail technique ; s permet de couper la lecture."},
     {"les touches", nullptr},
 };
 
@@ -116,6 +133,12 @@ constexpr HelpSection kHelpEn[] = {
      "Each figure's texts are Daoa's own wording, faithful to the "
      "public-domain translations of James Legge (1882) and Charles de "
      "Harlez (1889)."},
+    {"reading the place",
+     "Before each casting the device listens to the place: a passive WiFi "
+     "scan, never connected, nothing kept. The field's density leans yin "
+     "or yang (± 5% at most), its agitation makes changes slightly more "
+     "likely (+ 4% at most). Hardware chance remains the master. "
+     "w shows the technical detail; s can turn the reading off."},
     {"the keys", nullptr},
 };
 
@@ -125,6 +148,7 @@ constexpr const char* kHelpKeysFr[] = {
     "← →      les deux figures",
     "↓        texte complet · ↑ ↓ pages",
     "L        langue · h  cette aide",
+    "s        réglages · w  champ technique",
     "esc      revenir en arrière",
 };
 constexpr const char* kHelpKeysEn[] = {
@@ -132,7 +156,19 @@ constexpr const char* kHelpKeysEn[] = {
     "← →      the two figures",
     "↓        full text · ↑ ↓ pages",
     "L        language · h  this help",
+    "s        settings · w  technical field",
     "esc      go back",
+};
+
+constexpr const char* kAmbientBodyFr[] = {
+    "Le lieu est lu par un scan WiFi passif,",
+    "jamais connecté. Il teinte le tirage :",
+    "yang ± 5 %, mutations + 4 % au plus.",
+};
+constexpr const char* kAmbientBodyEn[] = {
+    "The place is read by a passive WiFi",
+    "scan, never connected. It tints the",
+    "casting: yang ± 5%, changes + 4% max.",
 };
 
 constexpr const char* kLineTitlesFr[6] = {
@@ -152,6 +188,16 @@ constexpr Strings kStringsFr{
     "du Yi Jing",
     "haut",
     "bas",
+    "lecture du lieu…",
+    "lecture du lieu · technique",
+    "lecture du lieu coupée (réglages : s)",
+    "lecture du lieu",
+    "sons",
+    "activée",
+    "coupée",
+    "activés",
+    "coupés",
+    kAmbientBodyFr,
     "glose",
     "portrait",
     "jugement",
@@ -172,6 +218,16 @@ constexpr Strings kStringsEn{
     "Yi Jing app",
     "upper",
     "lower",
+    "reading the place…",
+    "reading the place · technical",
+    "place reading is off (settings: s)",
+    "reading the place",
+    "sounds",
+    "on",
+    "off",
+    "on",
+    "off",
+    kAmbientBodyEn,
     "gloss",
     "portrait",
     "judgment",
@@ -237,8 +293,16 @@ void App::switchTo(Screen s, uint32_t now) {
     enter_.start(now, kEnterFadeMs);
     if (s == Screen::kCasting) {
         session_.reset();
+        session_.setWeights(0.f, 0.f);
         revealIndex_ = -1;
         completeAtMs_ = 0;
+        particleCount_ = 0;
+        scanning_ = false;
+        if (ambientEnabled_) {
+            scanning_ = true;
+            scanStartMs_ = now;
+            ambient_.startScan(now);
+        }
     }
     // Ne pas revenir en page 0 quand on rentre de la lecture détaillée
     // ni de l'aide.
@@ -265,11 +329,36 @@ void App::handleKey(Key k, uint32_t now) {
         }
         return;
     }
+    if (k == Key::kField) {
+        if (screen_ == Screen::kFieldInfo) {
+            switchTo(fieldReturn_, now);
+        } else if ((screen_ == Screen::kCasting && !scanning_) ||
+                   screen_ == Screen::kResult) {
+            fieldReturn_ = screen_;
+            switchTo(Screen::kFieldInfo, now);
+            playSound(Sound::kTick);
+        }
+        return;
+    }
+    if (k == Key::kSettings) {
+        if (screen_ == Screen::kSettings) {
+            switchTo(settingsReturn_, now);
+        } else if (screen_ != Screen::kCasting || !scanning_) {
+            settingsReturn_ = screen_ == Screen::kHelp ? helpReturn_ : screen_;
+            settingsRow_ = 0;
+            switchTo(Screen::kSettings, now);
+        }
+        return;
+    }
     if (k == Key::kReset) {
         // esc contextuel : l'aide revient d'où l'on vient, la lecture
         // détaillée au résultat, partout ailleurs à l'accueil.
         if (screen_ == Screen::kHelp) {
             switchTo(helpReturn_, now);
+        } else if (screen_ == Screen::kSettings) {
+            switchTo(settingsReturn_, now);
+        } else if (screen_ == Screen::kFieldInfo) {
+            switchTo(fieldReturn_, now);
         } else if (screen_ == Screen::kDetail || screen_ == Screen::kStructure) {
             switchTo(Screen::kResult, now);
         } else {
@@ -285,15 +374,21 @@ void App::handleKey(Key k, uint32_t now) {
 
         case Screen::kCasting: {
             if (k != Key::kAction) break;
-            // Préserver le rythme : pas de nouveau tirage pendant la révélation.
+            // Le lieu se lit d'abord ; puis rythme : un trait à la fois.
+            if (scanning_) break;
             if (revealIndex_ >= 0 && !reveal_.done(now)) break;
             if (session_.isComplete()) {
+                playSound(Sound::kComplete);
                 switchTo(Screen::kResult, now);
                 break;
             }
             session_.castNextLine();
             revealIndex_ = static_cast<int>(session_.lineCount()) - 1;
             reveal_.start(now, kRevealMs);
+            playSound(static_cast<Sound>(static_cast<int>(Sound::kReveal1) + revealIndex_));
+            if (isMoving(session_.line(static_cast<size_t>(revealIndex_)))) {
+                playSound(Sound::kMutation);
+            }
             if (session_.isComplete()) completeAtMs_ = now + kRevealMs;
             break;
         }
@@ -302,6 +397,7 @@ void App::handleKey(Key k, uint32_t now) {
             if (k == Key::kNext || k == Key::kPrev) {
                 resultPage_ = resultPage_ == 0 ? 1 : 0;
                 enter_.start(now, 180);
+                playSound(Sound::kTick);
             } else if (k == Key::kDown) {
                 detailNumber_ = resultPage_ == 1 ? session_.complementaryNumber()
                                                  : session_.originalNumber();
@@ -342,7 +438,27 @@ void App::handleKey(Key k, uint32_t now) {
         case Screen::kPromo:
             if (k == Key::kAction) switchTo(Screen::kWelcome, now);
             break;
+
+        case Screen::kSettings:
+            if (k == Key::kUp || k == Key::kDown) {
+                settingsRow_ = settingsRow_ == 0 ? 1 : 0;
+                playSound(Sound::kTick);
+            } else if (k == Key::kAction) {
+                if (settingsRow_ == 0) {
+                    ambientEnabled_ = !ambientEnabled_;
+                    ambient_.saveEnabled(ambientEnabled_);
+                } else {
+                    soundEnabled_ = !soundEnabled_;
+                    ambient_.saveSoundEnabled(soundEnabled_);
+                }
+                playSound(Sound::kTick);
+            }
+            break;
     }
+}
+
+void App::playSound(Sound snd) {
+    if (soundEnabled_ && sound_.play != nullptr) sound_.play(snd);
 }
 
 bool App::ensureFrame() {
@@ -373,6 +489,8 @@ void App::renderFrame(uint32_t now) {
         case Screen::kStructure: drawStructure(now); break;
         case Screen::kPromo: drawPromo(now); break;
         case Screen::kHelp: drawHelp(now); break;
+        case Screen::kSettings: drawSettings(now); break;
+        case Screen::kFieldInfo: drawFieldInfo(now); break;
     }
 }
 
@@ -411,10 +529,75 @@ void App::drawWelcome(uint32_t now) {
     ui::drawPrompt(s, pp, lang_, kWelcomePromptY, segs, 2);
 }
 
+void App::updateScan(uint32_t now) {
+    if (!scanning_) return;
+    const int n = ambient_.pollScan(now, aps_, kMaxAps);
+    if (n < 0) return;
+    // Le rituel dure au moins 1,4 s, même si le scan est plus prompt.
+    if (now - scanStartMs_ < 1400) {
+        apCount_ = n;  // résultats gardés, rideau maintenu
+        return;
+    }
+    apCount_ = n < 0 ? 0 : n;
+    field_ = readField(aps_, static_cast<size_t>(apCount_));
+    const CastWeights w = weightsFromField(field_);
+    session_.setWeights(w.yangBias, w.agingProb);
+    // Une particule par réseau : position déduite du canal et de l'index,
+    // respiration déphasée par le nombre d'or.
+    particleCount_ = apCount_ > kMaxAps ? kMaxAps : apCount_;
+    for (int i = 0; i < particleCount_; ++i) {
+        Particle& pt = particles_[i];
+        const float ch01 = static_cast<float>(aps_[i].channel % 14) / 13.f;
+        pt.baseX = 14.f + ch01 * (MINI_W - 28.f) +
+                   static_cast<float>((i * 37) % 11) - 5.f;
+        pt.baseY = 16.f + static_cast<float>((i * 53) % (MINI_H - 40));
+        pt.phase = static_cast<float>(i) * 2.399963f;
+        pt.ampX = 5.f + static_cast<float>((i * 29) % 7);
+        pt.ampY = 3.f + static_cast<float>((i * 17) % 5);
+        pt.lum = 0.25f + 0.75f * ((static_cast<float>(aps_[i].rssi) + 90.f) / 50.f);
+        if (pt.lum > 1.f) pt.lum = 1.f;
+        if (pt.lum < 0.25f) pt.lum = 0.25f;
+    }
+    scanning_ = false;
+    playSound(Sound::kChime);
+}
+
+void App::drawAmbientField(uint32_t now) {
+    if (particleCount_ == 0) return;
+    auto& s = frame_;
+    const float t = static_cast<float>(now) * 0.001f;
+    for (int i = 0; i < particleCount_; ++i) {
+        const Particle& pt = particles_[i];
+        const float x = pt.baseX + std::sin(t * 0.45f + pt.phase) * pt.ampX;
+        const float y = pt.baseY + std::sin(t * 0.31f + pt.phase * 1.7f) * pt.ampY;
+        // Respiration propre à chaque particule, jamais à zéro.
+        const float breath = 0.5f + 0.5f * (0.5f + 0.5f * std::sin(t * 0.9f + pt.phase));
+        const float lum = 0.12f + pt.lum * breath * 0.8f;
+        const uint16_t c = fade(anim::lerp565(MINI_BG, MINI_TEXT_META, lum), now);
+        s.fillRect(static_cast<int>(x), static_cast<int>(y), 2, 2, c);
+    }
+}
+
 void App::drawCasting(uint32_t now) {
     auto& s = frame_;
     const ui::Palette p = palette(now);
     const Strings& t = str(lang_);
+
+    updateScan(now);
+    drawAmbientField(now);
+
+    if (scanning_) {
+        // La lecture du lieu : le champ n'est pas encore révélé.
+        const float breath = 0.4f + 0.6f * anim::pulse(now, 1600);
+        ui::Palette pp = p;
+        pp.meta = fade(anim::lerp565(MINI_BG, MINI_TEXT_META, breath), now);
+        const ui::PromptSeg segs[] = {{nullptr, t.scanText}};
+        ui::drawPrompt(s, pp, lang_, kCastingPromptY, segs, 1);
+        // Les emplacements des six traits attendent déjà.
+        ui::HexLine none[6] = {};
+        ui::drawHexagram(s, p, kCastingX, kCastingY, none, 0, ui::YAO_L, false);
+        return;
+    }
 
     ui::HexLine lines[6];
     sessionLines(session_, false, lines);
@@ -427,6 +610,7 @@ void App::drawCasting(uint32_t now) {
     if (session_.isComplete()) {
         snprintf(text, sizeof(text), "%s", t.castDoneText);
         if (completeAtMs_ != 0 && now > completeAtMs_ + kAutoResultDelayMs) {
+            playSound(Sound::kComplete);
             switchTo(Screen::kResult, now);
             return;
         }
@@ -604,17 +788,126 @@ void App::buildHelpDoc() {
     doc_.clear();
     docPage_ = 0;
     const Strings& t = str(lang_);
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 7; ++i) {
         const HelpSection& sec = t.helpSections[i];
         appendDocText(sec.title, true);
         if (sec.body != nullptr) {
             appendDocText(sec.body, false);
         } else {
             // Dernière section : la liste des touches, une par ligne.
-            for (int j = 0; j < 5; ++j) appendDocText(t.helpKeys[j], false);
+            for (int j = 0; j < 6; ++j) appendDocText(t.helpKeys[j], false);
             break;
         }
     }
+}
+
+void App::drawSettings(uint32_t now) {
+    auto& s = frame_;
+    const ui::Palette p = palette(now);
+    const Strings& t = str(lang_);
+
+    ui::drawDocHeader(s, p, keyLabel("settings", lang_), 1, 1);
+
+    struct Row {
+        const char* name;
+        bool on;
+    };
+    struct RowState {
+        const char* on;
+        const char* off;
+    };
+    const Row rows[2] = {{t.rowAmbient, ambientEnabled_}, {t.rowSound, soundEnabled_}};
+    const RowState states[2] = {{t.stateOnAmbient, t.stateOffAmbient},
+                                {t.stateOnSound, t.stateOffSound}};
+    s.setFont(&fonts::efontJA_12);
+    for (int i = 0; i < 2; ++i) {
+        const int y = 28 + i * (MINI_BODY_LEAD + SP_4);
+        const bool sel = settingsRow_ == i;
+        s.setTextDatum(textdatum_t::top_left);
+        s.setTextColor(sel ? p.text : p.meta, p.bg);
+        char name[48];
+        snprintf(name, sizeof(name), "%s%s", sel ? "· " : "  ", rows[i].name);
+        s.drawString(name, MINI_MARGIN_X, y);
+        s.setTextDatum(textdatum_t::top_right);
+        s.setTextColor(rows[i].on ? p.text : p.meta, p.bg);
+        s.drawString(rows[i].on ? states[i].on : states[i].off, MINI_W - MINI_MARGIN_X, y);
+    }
+
+    // Explication honnête de la lecture du lieu.
+    s.setTextDatum(textdatum_t::top_left);
+    s.setTextColor(p.meta, p.bg);
+    for (int i = 0; i < 3; ++i) {
+        s.drawString(t.ambientBody[i], MINI_MARGIN_X, 72 + i * MINI_BODY_LEAD);
+    }
+
+    ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[ui::kFooterSettings]);
+}
+
+// Vue technique de la lecture du lieu : réseaux, valeurs, pondérations et
+// probabilités résultantes. La transparence est la condition de la règle.
+void App::drawFieldInfo(uint32_t now) {
+    auto& s = frame_;
+    const ui::Palette p = palette(now);
+    const Strings& t = str(lang_);
+
+    ui::drawDocHeader(s, p, t.fieldTitle, 1, 1);
+    s.setFont(&fonts::efontJA_12);
+    s.setTextDatum(textdatum_t::top_left);
+    char buf[64];
+    int y = 26;
+
+    if (!ambientEnabled_) {
+        s.setTextColor(p.meta, p.bg);
+        s.drawString(t.fieldOffText, MINI_MARGIN_X, y);
+    } else {
+        // Réseaux et canaux (jamais de SSID : ils ne sont pas collectés).
+        s.setTextColor(p.text, p.bg);
+        snprintf(buf, sizeof(buf), lang_ == Lang::kFr ? "%d réseaux" : "%d networks",
+                 apCount_);
+        s.drawString(buf, MINI_MARGIN_X, y);
+        y += MINI_BODY_LEAD;
+        s.setTextColor(p.meta, p.bg);
+        char list[64] = {0};
+        int used = 0;
+        for (int i = 0; i < apCount_ && i < 9; ++i) {
+            used += snprintf(list + used, sizeof(list) - used, "%s%d",
+                             i ? " " : "", aps_[i].channel);
+        }
+        snprintf(buf, sizeof(buf), "ch   %s", apCount_ ? list : "—");
+        s.drawString(buf, MINI_MARGIN_X, y);
+        y += MINI_BODY_LEAD;
+        used = 0;
+        list[0] = 0;
+        for (int i = 0; i < apCount_ && i < 6; ++i) {
+            used += snprintf(list + used, sizeof(list) - used, "%s%d",
+                             i ? " " : "", aps_[i].rssi);
+        }
+        snprintf(buf, sizeof(buf), "dBm  %s", apCount_ ? list : "—");
+        s.drawString(buf, MINI_MARGIN_X, y);
+        y += MINI_BODY_LEAD;
+
+        snprintf(buf, sizeof(buf),
+                 lang_ == Lang::kFr ? "densité %.2f · agitation %.2f"
+                                    : "density %.2f · agitation %.2f",
+                 static_cast<double>(field_.density01),
+                 static_cast<double>(field_.agitation01));
+        s.drawString(buf, MINI_MARGIN_X, y);
+        y += MINI_BODY_LEAD;
+        snprintf(buf, sizeof(buf), "β yang %+.3f · γ %.3f",
+                 static_cast<double>(session_.yangBias()),
+                 static_cast<double>(session_.agingProb()));
+        s.drawString(buf, MINI_MARGIN_X, y);
+        y += MINI_BODY_LEAD;
+        const double py = 0.5 + static_cast<double>(session_.yangBias());
+        const double po = 0.25 + static_cast<double>(session_.agingProb());
+        snprintf(buf, sizeof(buf), "p(6·7·8·9) %.1f %.1f %.1f %.1f %%",
+                 (1 - py) * po * 100, py * (1 - po) * 100, (1 - py) * (1 - po) * 100,
+                 py * po * 100);
+        s.setTextColor(p.text, p.bg);
+        s.drawString(buf, MINI_MARGIN_X, y);
+    }
+
+    ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[ui::kFooterField]);
 }
 
 void App::drawPromo(uint32_t now) {

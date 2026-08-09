@@ -18,9 +18,12 @@ court FR/EN) → écran promo avec QR code vers l'app complète.
 
 - Tirage **ligne à ligne uniquement**. Pas de tirage par cartes.
 - **Pas** de question en entrée, pas de saisie de texte.
-- **Pas** de journal, pas d'IA, pas de backend, pas de réseau, pas de
-  crédits/paiement, pas de comptes.
-- Hors-ligne à 100 %. Le WiFi/BLE ne doit même pas être initialisé.
+- **Pas** de journal, pas d'IA, pas de backend, pas de réseau connecté,
+  pas de crédits/paiement, pas de comptes.
+- **Hors-ligne au sens strict** (amendé 2026-08-09) : la seule exception
+  est la « lecture du lieu » — un **scan WiFi passif** avant le tirage.
+  Jamais de connexion, radio coupée sitôt le scan fini, rien n'est
+  stocké ni transmis, aucun SSID affiché. BLE jamais initialisé.
 - Toute extension passe par une décision explicite du product owner.
 
 ## Règle v1 (identique à daoa-ios)
@@ -39,7 +42,13 @@ extrait par script — c'est du contenu Daoa original, pas du code.
   (6 → 1/8, 7 → 3/8, 8 → 3/8, 9 → 1/8). Ratifié 2026-08-08 — écart
   volontaire par rapport à v1 (uniforme).
 - **Aléa** : `esp_random()` (TRNG matériel). Le tirage est réel ; aucune
-  entrée utilisateur ne l'influence.
+  entrée utilisateur ne l'influence. **Amendement 2026-08-09 — lecture du
+  lieu** : l'environnement radio ambiant peut pondérer le tirage de façon
+  **bornée** (biais de pièce ≤ ±0,05, vieillissement ≤ 0,04 — voir
+  `docs/03`), **documentée** dans l'aide, et **désactivable** (réglages,
+  touche `s`). Activée par défaut : c'est la fonction différenciatrice de
+  l'objet. L'utilisateur ne choisit toujours rien ; l'honnêteté de la
+  formule est la condition de la règle.
 - **Contenu compilé** : les textes sont générés en en-têtes C++ par
   `scripts/extract_content.py`. Pas de JSON à l'exécution.
 - **Simulateur SDL** : le rendu doit rester exécutable sur Mac (env `sim`)

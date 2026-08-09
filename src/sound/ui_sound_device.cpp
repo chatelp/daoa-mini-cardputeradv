@@ -1,0 +1,112 @@
+// Synthèse des sons d'interface sur le codec du Cardputer (ES8311, HP 1 W)
+// via M5Unified : petites sinusoïdes PCM avec enveloppe exponentielle,
+// générées une fois au premier son. Volume volontairement bas.
+#ifndef DAOA_SIM
+
+#include <M5Cardputer.h>
+
+#include <cmath>
+
+#include "ui_sound.h"
+
+namespace daoa {
+
+namespace {
+
+constexpr uint32_t kRate = 22050;
+constexpr float kVolume = 0.32f;  // discret ; le volume maître reste celui de M5
+
+// Une note : fréquence, durée, retard de départ (mélange dans le buffer).
+struct Partial {
+    float freq;
+    float dur;
+    float delay;
+    float gain;
+};
+
+int16_t* synth(const Partial* parts, int nParts, float totalDur, size_t& outLen) {
+    outLen = static_cast<size_t>(totalDur * kRate);
+    auto* buf = new int16_t[outLen];
+    for (size_t i = 0; i < outLen; ++i) {
+        const float t = static_cast<float>(i) / kRate;
+        float v = 0.f;
+        for (int p = 0; p < nParts; ++p) {
+            const float lt = t - parts[p].delay;
+            if (lt < 0.f || lt > parts[p].dur) continue;
+            const float env = std::exp(-lt * 22.f) * (1.f - std::exp(-lt * 900.f));
+            v += parts[p].gain * env * std::sin(6.2831853f * parts[p].freq * lt);
+        }
+        v *= kVolume;
+        if (v > 1.f) v = 1.f;
+        if (v < -1.f) v = -1.f;
+        buf[i] = static_cast<int16_t>(v * 32767.f);
+    }
+    return buf;
+}
+
+struct Clip {
+    const int16_t* data = nullptr;
+    size_t len = 0;
+};
+
+// Pentatonique la mineur : A3 C4 D4 E4 G4 A4.
+constexpr float kScale[6] = {220.f, 261.63f, 293.66f, 329.63f, 392.f, 440.f};
+
+Clip makeClip(Sound s) {
+    Clip c;
+    switch (s) {
+        case Sound::kReveal1:
+        case Sound::kReveal2:
+        case Sound::kReveal3:
+        case Sound::kReveal4:
+        case Sound::kReveal5:
+        case Sound::kReveal6: {
+            const int i = static_cast<int>(s);
+            const Partial p[] = {{kScale[i], 0.22f, 0.f, 1.f}};
+            c.data = synth(p, 1, 0.24f, c.len);
+            break;
+        }
+        case Sound::kMutation: {
+            // Octave grave, un souffle après la note du trait.
+            const Partial p[] = {{110.f, 0.30f, 0.05f, 0.8f}};
+            c.data = synth(p, 1, 0.36f, c.len);
+            break;
+        }
+        case Sound::kComplete: {
+            // Quinte descendante douce : E4 puis A3.
+            const Partial p[] = {{329.63f, 0.22f, 0.f, 0.9f}, {220.f, 0.34f, 0.14f, 1.f}};
+            c.data = synth(p, 2, 0.5f, c.len);
+            break;
+        }
+        case Sound::kChime: {
+            // La lecture du lieu se pose : A4 très doux, longue queue.
+            const Partial p[] = {{440.f, 0.4f, 0.f, 0.55f}, {659.25f, 0.3f, 0.02f, 0.2f}};
+            c.data = synth(p, 2, 0.42f, c.len);
+            break;
+        }
+        case Sound::kTick: {
+            const Partial p[] = {{1318.5f, 0.03f, 0.f, 0.35f}};
+            c.data = synth(p, 1, 0.035f, c.len);
+            break;
+        }
+    }
+    return c;
+}
+
+void playDevice(Sound s) {
+    static Clip clips[10];
+    const int idx = static_cast<int>(s);
+    if (clips[idx].data == nullptr) clips[idx] = makeClip(s);
+    if (clips[idx].data != nullptr) {
+        M5Cardputer.Speaker.playRaw(clips[idx].data, clips[idx].len, kRate, false, 1, 0);
+    }
+}
+
+}  // namespace
+
+extern const SoundHost kDeviceSoundHost;
+const SoundHost kDeviceSoundHost{playDevice};
+
+}  // namespace daoa
+
+#endif  // !DAOA_SIM

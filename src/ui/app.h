@@ -7,20 +7,30 @@
 #include <cstdint>
 #include <vector>
 
+#include "../ambient/ambient_host.h"
 #include "../anim/easing.h"
 #include "../content/content.h"
+#include "../core/ambient.h"
 #include "../core/casting.h"
+#include "../sound/ui_sound.h"
 #include "components.h"
 #include "gfx.h"
 
 namespace daoa {
 
 // Entrées abstraites ; le mapping clavier vit dans main.cpp / main_sdl.cpp.
-enum class Key : uint8_t { kNone, kAction, kPrev, kNext, kUp, kDown, kLang, kHelp, kReset };
+enum class Key : uint8_t {
+    kNone, kAction, kPrev, kNext, kUp, kDown, kLang, kHelp, kSettings, kField, kReset
+};
 
 class App {
   public:
-    explicit App(RandomFn rand32) : session_(rand32) {}
+    App(RandomFn rand32, const AmbientHost& ambient, const SoundHost& sound)
+        : session_(rand32),
+          ambient_(ambient),
+          sound_(sound),
+          ambientEnabled_(ambient.loadEnabled()),
+          soundEnabled_(ambient.loadSoundEnabled()) {}
 
     void handleKey(Key k, uint32_t nowMs);
 
@@ -34,7 +44,18 @@ class App {
     lgfx::LGFX_Sprite& frame() { return frame_; }
 
   private:
-    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kStructure, kPromo, kHelp };
+    enum class Screen : uint8_t {
+        kWelcome, kCasting, kResult, kDetail, kStructure, kPromo, kHelp, kSettings,
+        kFieldInfo
+    };
+
+    // Une particule du champ ambiant : un réseau perçu, qui dérive et respire.
+    struct Particle {
+        float baseX, baseY;
+        float phase;
+        float ampX, ampY;
+        float lum;  // énergie du signal, 0..1
+    };
 
     void switchTo(Screen s, uint32_t now);
     bool ensureFrame();
@@ -48,6 +69,11 @@ class App {
     void drawStructure(uint32_t now);
     void drawPromo(uint32_t now);
     void drawHelp(uint32_t now);
+    void drawSettings(uint32_t now);
+    void drawFieldInfo(uint32_t now);
+    void drawAmbientField(uint32_t now);
+    void updateScan(uint32_t now);
+    void playSound(Sound s);
     void buildDetailDoc();
     void buildHelpDoc();
     void appendDocText(const char* text, bool meta);
@@ -71,6 +97,22 @@ class App {
     std::vector<ui::ReaderLine> doc_;
     int docPage_ = 0;
     Screen helpReturn_ = Screen::kWelcome;
+
+    // Lecture du lieu et sons.
+    const AmbientHost& ambient_;
+    const SoundHost& sound_;
+    bool ambientEnabled_;
+    bool soundEnabled_;
+    bool scanning_ = false;
+    uint32_t scanStartMs_ = 0;
+    ApReading aps_[kMaxAps];
+    int apCount_ = 0;
+    AmbientField field_;
+    Particle particles_[kMaxAps];
+    int particleCount_ = 0;
+    Screen settingsReturn_ = Screen::kWelcome;
+    int settingsRow_ = 0;
+    Screen fieldReturn_ = Screen::kCasting;
 
     lgfx::LGFX_Sprite frame_;
     bool frameReady_ = false;

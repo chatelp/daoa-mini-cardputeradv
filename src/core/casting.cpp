@@ -1,5 +1,6 @@
 #include "casting.h"
 
+#include "ambient.h"
 #include "kingwen_table.h"
 
 namespace daoa {
@@ -21,7 +22,8 @@ uint8_t kingWenNumber(const LineValue* lines, bool afterMutation) {
 
 bool CastSession::castNextLine() {
     if (isComplete()) return false;
-    lines_[count_++] = castLineThreeCoins(rand_);
+    const CastWeights w{yangBias_, agingProb_};
+    lines_[count_++] = castLineThreeCoinsWeighted(rand_, w);
     return true;
 }
 
