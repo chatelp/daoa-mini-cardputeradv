@@ -1,3 +1,7 @@
 .pio/
 .vscode/
 .DS_Store
+
+# Livrables et références design (marque Daoa) — jamais dans le dépôt public
+design/
+.claude/skills/daoa-mini-design/
