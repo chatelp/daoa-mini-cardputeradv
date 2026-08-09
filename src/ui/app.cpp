@@ -51,6 +51,8 @@ struct Strings {
     const char* subtitle;
     const char* helpHint;
     const char* langHint;
+    const char* settingsHint;   // coin bas-gauche de l'accueil
+    const char* fieldHint;      // coin bas-droite du tirage (touche w)
     const char* castLineFmt;    // invite tirage, %d = prochaine ligne
     const char* castDoneText;   // invite fin de tirage
     const char* promoTag1;
@@ -182,6 +184,8 @@ constexpr Strings kStringsFr{
     "Un tirage du Yi Jing",
     "h · aide",
     "L · english",
+    "s · réglages",
+    "w · champ",
     "tirer la ligne %d / 6",
     "lire la figure",
     "L'app complète",
@@ -212,6 +216,8 @@ constexpr Strings kStringsEn{
     "A Yi Jing casting",
     "h · help",
     "L · français",
+    "s · settings",
+    "w · field",
     "cast line %d / 6",
     "read the figure",
     "The complete",
@@ -291,7 +297,12 @@ void App::switchTo(Screen s, uint32_t now) {
     const Screen previous = screen_;
     screen_ = s;
     enter_.start(now, kEnterFadeMs);
-    if (s == Screen::kCasting) {
+    // Revenir au tirage depuis une vue superposée (technique, aide,
+    // réglages) ne doit jamais réinitialiser le tirage en cours.
+    const bool overlayReturn = previous == Screen::kFieldInfo ||
+                               previous == Screen::kHelp ||
+                               previous == Screen::kSettings;
+    if (s == Screen::kCasting && !overlayReturn) {
         session_.reset();
         session_.setWeights(0.f, 0.f);
         revealIndex_ = -1;
@@ -509,6 +520,13 @@ void App::drawWelcome(uint32_t now) {
 
     ui::drawCornerHints(s, p, t.helpHint, t.langHint);
 
+    // Réglages : coin bas-gauche, en écho aux coins hauts.
+    s.setFont(&fonts::efontJA_12);
+    s.setTextDatum(textdatum_t::bottom_left);
+    s.setTextColor(fade(anim::lerp565(MINI_BG, MINI_TEXT_META, 0.7f), now), p.bg);
+    s.drawString(t.settingsHint, MINI_MARGIN_X, MINI_H - MINI_BAND_PAD_Y);
+    s.setTextDatum(textdatum_t::top_left);
+
     // Un seul accent : le lettermark.
     ui::drawMask(s, kWordmarkMask, kWordmarkX, kWordmarkY, MINI_BRAND, MINI_BG, enter);
 
@@ -566,15 +584,48 @@ void App::drawAmbientField(uint32_t now) {
     if (particleCount_ == 0) return;
     auto& s = frame_;
     const float t = static_cast<float>(now) * 0.001f;
+
+    // Le champ répond au tirage : bref surcroît de lumière à chaque trait.
+    float response = 0.f;
+    if (revealIndex_ >= 0 && !reveal_.done(now)) {
+        response = 0.7f * (1.f - reveal_.progress(now));
+    }
+
+    // Une onde concentrique à la fois, émise tour à tour par les réseaux.
+    constexpr uint32_t kRipplePeriodMs = 2600;
+    const int rippleIdx =
+        static_cast<int>((now / kRipplePeriodMs) % static_cast<uint32_t>(particleCount_));
+    const float rippleAge =
+        static_cast<float>(now % kRipplePeriodMs) / static_cast<float>(kRipplePeriodMs);
+
     for (int i = 0; i < particleCount_; ++i) {
         const Particle& pt = particles_[i];
         const float x = pt.baseX + std::sin(t * 0.45f + pt.phase) * pt.ampX;
         const float y = pt.baseY + std::sin(t * 0.31f + pt.phase * 1.7f) * pt.ampY;
+        const int xi = static_cast<int>(x), yi = static_cast<int>(y);
         // Respiration propre à chaque particule, jamais à zéro.
         const float breath = 0.5f + 0.5f * (0.5f + 0.5f * std::sin(t * 0.9f + pt.phase));
-        const float lum = 0.12f + pt.lum * breath * 0.8f;
-        const uint16_t c = fade(anim::lerp565(MINI_BG, MINI_TEXT_META, lum), now);
-        s.fillRect(static_cast<int>(x), static_cast<int>(y), 2, 2, c);
+        const float lum =
+            anim::clamp01((0.12f + pt.lum * breath * 0.8f) * (1.f + response));
+
+        // Lueur : halo doux sous un cœur net.
+        const uint16_t halo =
+            fade(anim::lerp565(MINI_BG, MINI_TEXT_META, lum * 0.30f), now);
+        const uint16_t core = fade(anim::lerp565(MINI_BG, MINI_TEXT_META, lum), now);
+        s.fillRect(xi - 1, yi - 1, 4, 4, halo);
+        s.fillRect(xi, yi, 2, 2, core);
+
+        // L'onde du réseau élu : deux cercles concentriques qui s'éteignent.
+        if (i == rippleIdx) {
+            const float r = 4.f + rippleAge * 18.f;
+            const float fadeOut = (1.f - rippleAge) * (1.f - rippleAge);
+            const float rl = anim::clamp01(pt.lum * fadeOut * (0.5f + response));
+            const uint16_t rc =
+                fade(anim::lerp565(MINI_BG, MINI_TEXT_META, rl * 0.55f), now);
+            const int ri = static_cast<int>(r);
+            s.drawCircle(xi + 1, yi + 1, ri, rc);
+            s.drawCircle(xi + 1, yi + 1, ri - 1, rc);
+        }
     }
 }
 
@@ -605,6 +656,13 @@ void App::drawCasting(uint32_t now) {
     const float lastReveal = (revealIndex_ >= 0) ? reveal_.progress(now) : 1.f;
     ui::drawHexagram(s, p, kCastingX, kCastingY, lines, revealed, ui::YAO_L, true,
                      lastReveal);
+
+    // Vue technique du champ : coin bas-droite, discret.
+    s.setFont(&fonts::efontJA_12);
+    s.setTextDatum(textdatum_t::bottom_right);
+    s.setTextColor(fade(anim::lerp565(MINI_BG, MINI_TEXT_META, 0.7f), now), p.bg);
+    s.drawString(t.fieldHint, MINI_W - MINI_MARGIN_X, MINI_H - MINI_BAND_PAD_Y);
+    s.setTextDatum(textdatum_t::top_left);
 
     char text[48];
     if (session_.isComplete()) {
