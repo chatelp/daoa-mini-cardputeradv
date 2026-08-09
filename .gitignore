@@ -2,6 +2,9 @@
 .vscode/
 .DS_Store
 
+# Stratégie de lancement, analyse concurrentielle, fiches de publication.
+private/
+
 # Marque et contenu Daoa : jamais dans le dépôt public.
 # (livrables design, skill, et les en-têtes GÉNÉRÉS qui les encodent)
 design/
