@@ -24,7 +24,8 @@ struct AmbientHost {
     // Réglage « sons ». Défaut : activés.
     bool (*loadSoundEnabled)();
     void (*saveSoundEnabled)(bool enabled);
-    // Niveau sonore, 0 = doux, 1 = moyen, 2 = fort. Défaut : moyen.
+    // Niveau sonore, 0 = doux, 1 = moyen, 2 = fort. Défaut : doux —
+    // l'objet est tenu en main, dans le calme (décision 2026-08-09).
     uint8_t (*loadVolumeLevel)();
     void (*saveVolumeLevel)(uint8_t level);
 };

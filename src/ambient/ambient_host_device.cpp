@@ -64,9 +64,9 @@ void saveSoundDevice(bool enabled) {
 
 uint8_t loadVolumeDevice() {
     g_prefs.begin("daoa", true);
-    const uint8_t level = g_prefs.getUChar("volume", 1);
+    const uint8_t level = g_prefs.getUChar("volume", 0);  // doux par défaut
     g_prefs.end();
-    return level > 2 ? 1 : level;
+    return level > 2 ? 0 : level;
 }
 
 void saveVolumeDevice(uint8_t level) {

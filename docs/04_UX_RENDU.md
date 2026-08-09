@@ -69,7 +69,8 @@ Pas de saisie de texte nulle part.
 - **Réglages** (touche `s`) : trois lignes (lecture du lieu, sons,
   volume), ↑↓ sélection, espace bascule ou cycle le niveau, persistant
   (NVS). Le volume a trois niveaux nommés (doux · moyen · fort, soit
-  70/150/235) et s'éteint visuellement quand les sons sont coupés ; le
+  70/150/235), **doux par défaut** — l'objet se tient en main, dans le
+  calme et s'éteint visuellement quand les sons sont coupés ; le
   tick de confirmation sort au nouveau niveau, pour l'entendre aussitôt.
 - **Sons** : sinusoïdes brèves à décroissance douce (PCM, jamais tone()) —
   les six traits égrènent une pentatonique montante (A3→A4), doublage

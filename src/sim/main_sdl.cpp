@@ -59,7 +59,7 @@ int simPollScan(uint32_t nowMs, daoa::ApReading* out, int max) {
 
 bool g_ambientEnabled = true;
 bool g_soundEnabled = true;
-uint8_t g_volumeLevel = 1;
+uint8_t g_volumeLevel = 0;  // doux, comme sur l'appareil
 bool simLoadEnabled() { return g_ambientEnabled; }
 void simSaveEnabled(bool e) { g_ambientEnabled = e; }
 bool simLoadSound() { return g_soundEnabled; }
