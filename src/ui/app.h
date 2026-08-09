@@ -1,5 +1,7 @@
 // Machine à états des écrans + rendu. Ne dépend que de lgfx:: (jamais du
 // matériel) : le même code dessine sur l'appareil et dans le simulateur SDL.
+// Les écrans composent les gabarits du design system daoa-mini-design via
+// les composants de components.h ; aucune cote en dur hors daoa_tokens.h.
 #pragma once
 
 #include <cstdint>
@@ -8,6 +10,7 @@
 #include "../anim/easing.h"
 #include "../content/content.h"
 #include "../core/casting.h"
+#include "components.h"
 #include "gfx.h"
 
 namespace daoa {
@@ -33,17 +36,10 @@ class App {
   private:
     enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kPromo, kHelp };
 
-    // Une ligne du document de lecture détaillée : pointe dans le corpus
-    // constant (aucune copie de texte), avec un style titre/corps.
-    struct DocLine {
-        const char* text;
-        uint16_t len;
-        bool title;
-    };
-
     void switchTo(Screen s, uint32_t now);
     bool ensureFrame();
     uint16_t fade(uint16_t c, uint32_t now) const;
+    ui::Palette palette(uint32_t now) const;
 
     void drawWelcome(uint32_t now);
     void drawCasting(uint32_t now);
@@ -53,12 +49,9 @@ class App {
     void drawHelp(uint32_t now);
     void buildDetailDoc();
     void buildHelpDoc();
-    void appendDocText(const char* text, bool title);
+    void appendDocText(const char* text, bool meta);
     // Rendu commun des écrans-documents (lecture détaillée, aide).
-    void drawDocScreen(const char* headerLeft, uint32_t now);
-    void drawCastLine(int index, LineValue v, float t, uint32_t now);
-    void drawMiniFigure(int x, int yTop, bool complementary, uint32_t now);
-    void drawBottomBar(const char* caption, bool showDots, uint32_t now);
+    void drawDocScreen(const char* context, const char* footerLegend, uint32_t now);
 
     CastSession session_;
     Screen screen_ = Screen::kWelcome;
@@ -73,7 +66,7 @@ class App {
 
     // Lecture détaillée (textes du corpus Daoa 2) et aide (même moteur).
     uint8_t detailNumber_ = 1;
-    std::vector<DocLine> doc_;
+    std::vector<ui::ReaderLine> doc_;
     int docPage_ = 0;
     Screen helpReturn_ = Screen::kWelcome;
 
