@@ -47,7 +47,7 @@ void setup() {
     M5Cardputer.begin(cfg, true);
     M5Cardputer.Display.setRotation(1);
     M5Cardputer.Display.setBrightness(160);
-    M5Cardputer.Speaker.setVolume(150);  // sons d'interface : présents, jamais forts
+    // Le volume est appliqué avant chaque son, depuis les réglages (NVS).
 }
 
 void loop() {

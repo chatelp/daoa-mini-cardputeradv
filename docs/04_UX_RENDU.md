@@ -66,9 +66,17 @@ Pas de saisie de texte nulle part.
 - **Vue technique** (touche `w`, depuis tirage ou résultat) : réseaux,
   canaux, dBm, densité/agitation, β/γ, probabilités résultantes — la
   transparence est la condition de la règle. Public geek assumé.
-- **Réglages** (touche `s`) : deux lignes (lecture du lieu, sons),
-  ↑↓ sélection, espace bascule, persistant (NVS).
+- **Réglages** (touche `s`) : trois lignes (lecture du lieu, sons,
+  volume), ↑↓ sélection, espace bascule ou cycle le niveau, persistant
+  (NVS). Le volume a trois niveaux nommés (doux · moyen · fort, soit
+  70/150/235) et s'éteint visuellement quand les sons sont coupés ; le
+  tick de confirmation sort au nouveau niveau, pour l'entendre aussitôt.
 - **Sons** : sinusoïdes brèves à décroissance douce (PCM, jamais tone()) —
   les six traits égrènent une pentatonique montante (A3→A4), doublage
   grave sur les mutables, résolution E4→A3 au résultat, tick discret sur
-  les pages, carillon en fin de lecture du lieu. Volume bas, coupables.
+  les pages, carillon en fin de lecture du lieu. Coupables, volume réglable.
+  **Registre imposé par le matériel** : le haut-parleur de 1 W ne restitue
+  rien sous ~400 Hz — la gamme est donc écrite en A5–A6 (880–1760 Hz), et
+  non dans l'octave où elle se lirait naturellement. Constaté le
+  2026-08-09 : en A3–A4, le tirage était muet alors que les ticks aigus
+  s'entendaient.

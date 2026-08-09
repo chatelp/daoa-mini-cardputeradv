@@ -64,6 +64,8 @@ struct Strings {
     const char* fieldOffText;   // vue technique quand la lecture est coupée
     const char* rowAmbient;     // réglages : nom de la ligne
     const char* rowSound;
+    const char* rowVolume;
+    const char* const* volumeNames;  // 3 niveaux
     const char* stateOnAmbient;
     const char* stateOffAmbient;
     const char* stateOnSound;
@@ -162,6 +164,9 @@ constexpr const char* kHelpKeysEn[] = {
     "esc      go back",
 };
 
+constexpr const char* kVolumeNamesFr[3] = {"doux", "moyen", "fort"};
+constexpr const char* kVolumeNamesEn[3] = {"soft", "medium", "loud"};
+
 constexpr const char* kAmbientBodyFr[] = {
     "Le lieu est lu par un scan WiFi passif,",
     "jamais connecté. Il teinte le tirage :",
@@ -197,6 +202,8 @@ constexpr Strings kStringsFr{
     "lecture du lieu coupée (réglages : s)",
     "lecture du lieu",
     "sons",
+    "volume",
+    kVolumeNamesFr,
     "activée",
     "coupée",
     "activés",
@@ -229,6 +236,8 @@ constexpr Strings kStringsEn{
     "place reading is off (settings: s)",
     "reading the place",
     "sounds",
+    "volume",
+    kVolumeNamesEn,
     "on",
     "off",
     "on",
@@ -455,17 +464,24 @@ void App::handleKey(Key k, uint32_t now) {
             break;
 
         case Screen::kSettings:
-            if (k == Key::kUp || k == Key::kDown) {
-                settingsRow_ = settingsRow_ == 0 ? 1 : 0;
+            if (k == Key::kDown) {
+                settingsRow_ = (settingsRow_ + 1) % kSettingsRows;
+                playSound(Sound::kTick);
+            } else if (k == Key::kUp) {
+                settingsRow_ = (settingsRow_ + kSettingsRows - 1) % kSettingsRows;
                 playSound(Sound::kTick);
             } else if (k == Key::kAction) {
                 if (settingsRow_ == 0) {
                     ambientEnabled_ = !ambientEnabled_;
                     ambient_.saveEnabled(ambientEnabled_);
-                } else {
+                } else if (settingsRow_ == 1) {
                     soundEnabled_ = !soundEnabled_;
                     ambient_.saveSoundEnabled(soundEnabled_);
+                } else {
+                    volumeLevel_ = static_cast<uint8_t>((volumeLevel_ + 1) % 3);
+                    ambient_.saveVolumeLevel(volumeLevel_);
                 }
+                // Le tick sort au nouveau réglage : on entend ce qu'on règle.
                 playSound(Sound::kTick);
             }
             break;
@@ -473,7 +489,11 @@ void App::handleKey(Key k, uint32_t now) {
 }
 
 void App::playSound(Sound snd) {
-    if (soundEnabled_ && sound_.play != nullptr) sound_.play(snd);
+    if (!soundEnabled_ || sound_.play == nullptr) return;
+    // Le volume est posé ici et non à la construction : l'App est un objet
+    // global, construit avant M5Cardputer.begin().
+    if (sound_.setVolume != nullptr) sound_.setVolume(kVolumeLevels[volumeLevel_]);
+    sound_.play(snd);
 }
 
 bool App::ensureFrame() {
@@ -872,18 +892,19 @@ void App::drawSettings(uint32_t now) {
 
     struct Row {
         const char* name;
-        bool on;
+        const char* value;
+        bool active;  // valeur en papier (actif) ou en pierre (au repos)
     };
-    struct RowState {
-        const char* on;
-        const char* off;
+    const Row rows[kSettingsRows] = {
+        {t.rowAmbient, ambientEnabled_ ? t.stateOnAmbient : t.stateOffAmbient,
+         ambientEnabled_},
+        {t.rowSound, soundEnabled_ ? t.stateOnSound : t.stateOffSound, soundEnabled_},
+        // Le volume s'éteint visuellement quand les sons sont coupés.
+        {t.rowVolume, t.volumeNames[volumeLevel_], soundEnabled_},
     };
-    const Row rows[2] = {{t.rowAmbient, ambientEnabled_}, {t.rowSound, soundEnabled_}};
-    const RowState states[2] = {{t.stateOnAmbient, t.stateOffAmbient},
-                                {t.stateOnSound, t.stateOffSound}};
     s.setFont(&fonts::efontJA_12);
-    for (int i = 0; i < 2; ++i) {
-        const int y = 28 + i * (MINI_BODY_LEAD + SP_4);
+    for (int i = 0; i < kSettingsRows; ++i) {
+        const int y = 26 + i * (MINI_BODY_LEAD + SP_2);
         const bool sel = settingsRow_ == i;
         s.setTextDatum(textdatum_t::top_left);
         s.setTextColor(sel ? p.text : p.meta, p.bg);
@@ -891,15 +912,15 @@ void App::drawSettings(uint32_t now) {
         snprintf(name, sizeof(name), "%s%s", sel ? "· " : "  ", rows[i].name);
         s.drawString(name, MINI_MARGIN_X, y);
         s.setTextDatum(textdatum_t::top_right);
-        s.setTextColor(rows[i].on ? p.text : p.meta, p.bg);
-        s.drawString(rows[i].on ? states[i].on : states[i].off, MINI_W - MINI_MARGIN_X, y);
+        s.setTextColor(rows[i].active ? p.text : p.meta, p.bg);
+        s.drawString(rows[i].value, MINI_W - MINI_MARGIN_X, y);
     }
 
     // Explication honnête de la lecture du lieu.
     s.setTextDatum(textdatum_t::top_left);
     s.setTextColor(p.meta, p.bg);
     for (int i = 0; i < 3; ++i) {
-        s.drawString(t.ambientBody[i], MINI_MARGIN_X, 72 + i * MINI_BODY_LEAD);
+        s.drawString(t.ambientBody[i], MINI_MARGIN_X, 78 + i * MINI_BODY_LEAD);
     }
 
     ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[ui::kFooterSettings]);

@@ -108,10 +108,12 @@ void playDevice(Sound s) {
     }
 }
 
+void setVolumeDevice(uint8_t volume) { M5Cardputer.Speaker.setVolume(volume); }
+
 }  // namespace
 
 extern const SoundHost kDeviceSoundHost;
-const SoundHost kDeviceSoundHost{playDevice};
+const SoundHost kDeviceSoundHost{playDevice, setVolumeDevice};
 
 }  // namespace daoa
 

@@ -59,14 +59,18 @@ int simPollScan(uint32_t nowMs, daoa::ApReading* out, int max) {
 
 bool g_ambientEnabled = true;
 bool g_soundEnabled = true;
+uint8_t g_volumeLevel = 1;
 bool simLoadEnabled() { return g_ambientEnabled; }
 void simSaveEnabled(bool e) { g_ambientEnabled = e; }
 bool simLoadSound() { return g_soundEnabled; }
 void simSaveSound(bool e) { g_soundEnabled = e; }
+uint8_t simLoadVolume() { return g_volumeLevel; }
+void simSaveVolume(uint8_t v) { g_volumeLevel = v; }
 
-const daoa::AmbientHost kSimAmbientHost{simStartScan, simPollScan, simLoadEnabled,
-                                        simSaveEnabled, simLoadSound, simSaveSound};
-const daoa::SoundHost kSimSoundHost{nullptr};
+const daoa::AmbientHost kSimAmbientHost{simStartScan,  simPollScan,   simLoadEnabled,
+                                        simSaveEnabled, simLoadSound, simSaveSound,
+                                        simLoadVolume,  simSaveVolume};
+const daoa::SoundHost kSimSoundHost{nullptr, nullptr};
 
 // PRNG xorshift déterministe pour le simulateur (l'appareil, lui, utilise
 // le TRNG matériel — voir src/main.cpp).
@@ -183,9 +187,9 @@ int runShots() {
     app.handleKey(Key::kSettings, 11500);                   // réglages
     shot(app, 11900, "13_reglages_fr.bmp");
     app.handleKey(Key::kDown, 11950);                       // ligne sons
-    app.handleKey(Key::kAction, 12000);                     // bascule
-    shot(app, 12400, "14_reglages_sons_coupes_fr.bmp");
-    app.handleKey(Key::kAction, 12050);                     // rétablit
+    app.handleKey(Key::kDown, 11970);                       // ligne volume
+    app.handleKey(Key::kAction, 12000);                     // niveau suivant
+    shot(app, 12400, "14_reglages_volume_fr.bmp");
     app.handleKey(Key::kReset, 12100);                      // esc → résultat
 
     app.handleKey(Key::kLang, 12150);                       // → EN

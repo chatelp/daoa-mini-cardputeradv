@@ -59,7 +59,7 @@ avec la touche `w` :
 | ![Lecture](docs/images/lecture-texte.png) | ![Structure](docs/images/structure.png) |
 | **Lecture** — portrait, Jugement, Image, sens des six traits | **Structure** — les deux trigrammes, dérivés des traits |
 | ![Réglages](docs/images/reglages.png) | ![Promo](docs/images/promo.png) |
-| **Réglages** — lecture du lieu, sons ; persistants | **Promo** — QR vers l'app complète |
+| **Réglages** — lecture du lieu, sons, volume ; persistants | **Promo** — QR vers l'app complète |
 
 ---
 
@@ -73,7 +73,7 @@ avec la touche `w` :
 | `↑` | revenir en arrière dans les pages |
 | `l` | français ↔ anglais |
 | `h` | aide embarquée (7 sections) |
-| `s` | réglages (lecture du lieu, sons) |
+| `s` | réglages (lecture du lieu, sons, volume) |
 | `w` | vue technique du champ |
 | `esc` | retour |
 

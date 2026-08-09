@@ -23,6 +23,12 @@ enum class Sound : uint8_t {
 
 struct SoundHost {
     void (*play)(Sound s);
+    // Volume matériel, 0..255. Appelé avant chaque son : M5 doit être
+    // initialisé, ce qui n'est pas le cas à la construction de l'App.
+    void (*setVolume)(uint8_t volume);
 };
+
+// Les trois niveaux offerts dans les réglages.
+inline constexpr uint8_t kVolumeLevels[3] = {70, 150, 235};
 
 }  // namespace daoa

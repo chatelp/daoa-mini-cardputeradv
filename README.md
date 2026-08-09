@@ -59,7 +59,7 @@ with the `w` key:
 | ![Reading](docs/images/lecture-texte.png) | ![Structure](docs/images/structure.png) |
 | **Reading** — portrait, Judgment, Image, the six lines' meanings | **Structure** — the two trigrams, derived from the lines |
 | ![Settings](docs/images/reglages.png) | ![Promo](docs/images/promo.png) |
-| **Settings** — place reading, sounds; persisted to NVS | **Promo** — QR code to the full app |
+| **Settings** — place reading, sounds, volume; persisted to NVS | **Promo** — QR code to the full app |
 
 ---
 
@@ -73,7 +73,7 @@ with the `w` key:
 | `↑` | go back through the pages |
 | `l` | French ↔ English |
 | `h` | built-in help (7 sections) |
-| `s` | settings (place reading, sounds) |
+| `s` | settings (place reading, sounds, volume) |
 | `w` | technical view of the field |
 | `esc` | back |
 

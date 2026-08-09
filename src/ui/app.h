@@ -30,7 +30,8 @@ class App {
           ambient_(ambient),
           sound_(sound),
           ambientEnabled_(ambient.loadEnabled()),
-          soundEnabled_(ambient.loadSoundEnabled()) {}
+          soundEnabled_(ambient.loadSoundEnabled()),
+          volumeLevel_(ambient.loadVolumeLevel()) {}
 
     void handleKey(Key k, uint32_t nowMs);
 
@@ -103,6 +104,7 @@ class App {
     const SoundHost& sound_;
     bool ambientEnabled_;
     bool soundEnabled_;
+    uint8_t volumeLevel_;  // 0 doux · 1 moyen · 2 fort
     bool scanning_ = false;
     uint32_t scanStartMs_ = 0;
     ApReading aps_[kMaxAps];
@@ -112,6 +114,7 @@ class App {
     int particleCount_ = 0;
     Screen settingsReturn_ = Screen::kWelcome;
     int settingsRow_ = 0;
+    static constexpr int kSettingsRows = 3;
     Screen fieldReturn_ = Screen::kCasting;
 
     lgfx::LGFX_Sprite frame_;

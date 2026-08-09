@@ -24,6 +24,9 @@ struct AmbientHost {
     // Réglage « sons ». Défaut : activés.
     bool (*loadSoundEnabled)();
     void (*saveSoundEnabled)(bool enabled);
+    // Niveau sonore, 0 = doux, 1 = moyen, 2 = fort. Défaut : moyen.
+    uint8_t (*loadVolumeLevel)();
+    void (*saveVolumeLevel)(uint8_t level);
 };
 
 }  // namespace daoa

@@ -62,12 +62,26 @@ void saveSoundDevice(bool enabled) {
     g_prefs.end();
 }
 
+uint8_t loadVolumeDevice() {
+    g_prefs.begin("daoa", true);
+    const uint8_t level = g_prefs.getUChar("volume", 1);
+    g_prefs.end();
+    return level > 2 ? 1 : level;
+}
+
+void saveVolumeDevice(uint8_t level) {
+    g_prefs.begin("daoa", false);
+    g_prefs.putUChar("volume", level);
+    g_prefs.end();
+}
+
 }  // namespace
 
 extern const AmbientHost kDeviceAmbientHost;
-const AmbientHost kDeviceAmbientHost{startScanDevice, pollScanDevice,
+const AmbientHost kDeviceAmbientHost{startScanDevice,   pollScanDevice,
                                      loadEnabledDevice, saveEnabledDevice,
-                                     loadSoundDevice, saveSoundDevice};
+                                     loadSoundDevice,   saveSoundDevice,
+                                     loadVolumeDevice,  saveVolumeDevice};
 
 }  // namespace daoa
 
