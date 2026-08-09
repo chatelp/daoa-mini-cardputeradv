@@ -56,6 +56,7 @@ struct Strings {
     const char* promoTag2;
     const char* posUpper;       // écran structure
     const char* posLower;
+    const char* detailGloss;    // section « glose » quand elle est tronquée
     const char* detailPortrait;
     const char* detailJudgment;
     const char* detailImage;
@@ -151,6 +152,7 @@ constexpr Strings kStringsFr{
     "du Yi Jing",
     "haut",
     "bas",
+    "glose",
     "portrait",
     "jugement",
     "image",
@@ -170,6 +172,7 @@ constexpr Strings kStringsEn{
     "Yi Jing app",
     "upper",
     "lower",
+    "gloss",
     "portrait",
     "judgment",
     "image",
@@ -572,8 +575,17 @@ void App::buildDetailDoc() {
     doc_.clear();
     docPage_ = 0;
     const HexagramDetail& d = detail(detailNumber_);
+    const HexagramInfo& h = hexagram(detailNumber_);
     const Strings& t = str(lang_);
     const bool fr = lang_ == Lang::kFr;
+
+    // Si la glose du résultat a été tronquée par clampGloss (plus de deux
+    // lignes de colonne pleine), la lecture s'ouvre sur son texte entier.
+    const char* desc = description(h, lang_);
+    if (wrapLines(frame_, desc, MINI_COL_W).size() > 2) {
+        appendDocText(t.detailGloss, true);
+        appendDocText(desc, false);
+    }
 
     appendDocText(t.detailPortrait, true);
     appendDocText(fr ? d.generalFr : d.generalEn, false);
