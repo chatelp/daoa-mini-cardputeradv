@@ -38,6 +38,21 @@ hanzi avec bascule efontJA_24_b pour les figures 33/43/44. La fonte dédiée
 - [x] Validation finale du product owner sur l'ensemble du parcours —
       **MVP validé le 2026-08-08**
 
+## Phase 1.2 — Design system — FAIT (2026-08-09)
+
+- [x] Handoff Claude Design (design/claude-design-handoff/) → livrable reçu
+      et installé en skill projet (.claude/skills/daoa-mini-design)
+- [x] Tokens traduits en constexpr (src/ui/daoa_tokens.h) : bandes 18/99/18,
+      espacements base 2, type 12/16/24, yao L/M/S (1:12), palette sémantique
+- [x] Composants LovyanGFX (src/ui/components.{h,cpp}) : DocHeader,
+      FooterBar (touche papier/libellé pierre), PageDots, Prompt, CornerHints,
+      YaoLine, Hexagram (traits en attente, marques en masques cinabre),
+      Reader, FigureTitle, QrPanel
+- [x] Assets bitmap intégrés : mutations 16/12/8, ornement accueil,
+      sceau 36×46, fond promo 565, lettermark 104 px
+- [x] Six écrans recomposés sur les gabarits ; validé simulateur + appareil
+- [ ] Reste du système non intégré : trigrammes 24×24 (aucun usage à date)
+
 ## Phase 1.5 — Rituel et finitions
 
 - [ ] Direction typographique définitive (fontes VLW dédiées)
