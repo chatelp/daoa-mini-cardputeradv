@@ -317,7 +317,8 @@ void App::switchTo(Screen s, uint32_t now) {
     }
     // Ne pas revenir en page 0 quand on rentre de la lecture détaillée
     // ni de l'aide.
-    if (s == Screen::kResult && previous != Screen::kDetail && previous != Screen::kHelp) {
+    if (s == Screen::kResult && previous != Screen::kDetail &&
+        previous != Screen::kHelp && previous != Screen::kPromo) {
         resultPage_ = 0;
     }
     if (s == Screen::kDetail) buildDetailDoc();
@@ -370,7 +371,10 @@ void App::handleKey(Key k, uint32_t now) {
             switchTo(settingsReturn_, now);
         } else if (screen_ == Screen::kFieldInfo) {
             switchTo(fieldReturn_, now);
-        } else if (screen_ == Screen::kDetail || screen_ == Screen::kStructure) {
+        } else if (screen_ == Screen::kDetail || screen_ == Screen::kStructure ||
+                   screen_ == Screen::kPromo) {
+            // esc recule d'un pas dans le parcours : la promo revient au
+            // résultat, et c'est le résultat qui referme le cycle.
             switchTo(Screen::kResult, now);
         } else {
             switchTo(Screen::kWelcome, now);

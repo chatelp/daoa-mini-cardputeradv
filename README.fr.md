@@ -78,9 +78,25 @@ avec la touche `w` :
 | `esc` | retour |
 
 Les sons sont des sinusoïdes PCM à décroissance douce, jamais un buzzer
-carré : les six traits égrènent une **pentatonique montante** (A3 → A4),
-une octave grave double les lignes mutables, une quinte descendante
+carré : les six traits égrènent une **pentatonique montante** (A5 → A6),
+une quinte au-dessus marque les lignes mutables, une quinte descendante
 résout à l'arrivée du résultat.
+
+<details>
+<summary>Pourquoi cette gamme est deux octaves plus haut qu'elle « devrait »</summary>
+
+La gamme a d'abord été écrite là où elle se lit naturellement sur le
+papier — A3 à A4, 220 à 440 Hz. Sur l'appareil, le tirage était
+**totalement muet** alors que les ticks d'interface s'entendaient très bien.
+
+Rien à reprocher au code : un micro haut-parleur de 1 W dans un boîtier de
+poche résonne autour de 1 kHz et s'effondre sous ~400 Hz. Les notes étaient
+jouées, fidèlement, dans une bande que le matériel ne sait pas restituer.
+Transposer toute la gamme de deux octaves — rapports musicaux intacts,
+registre déplacé dans la bande efficace — a réglé le problème. Bon à savoir
+avant de composer quoi que ce soit pour ce genre d'appareil.
+
+</details>
 
 ---
 
@@ -275,6 +291,18 @@ pour qui passe par là.
 | [docs/03](docs/03_MECANIQUE_TIRAGE.md) | **spécification du tirage** — source de vérité |
 | [docs/04](docs/04_UX_RENDU.md) | écrans, direction visuelle, fontes, animations |
 | [docs/05](docs/05_ROADMAP.md) | phases et état courant |
+
+---
+
+## Licence
+
+Le **code** de ce dépôt est publié sous [licence MIT](LICENSE) — servez-vous,
+apprenez-en, construisez dessus.
+
+Ce que la licence ne couvre pas, parce que ce n'est pas dans le dépôt :
+la **marque Daoa** (lettermark, sceau, identité visuelle) et le **corpus
+Yi Jing** écrit pour Daoa. Ils restent propriétaires, et sont régénérés
+localement depuis des sources privées.
 
 ---
 

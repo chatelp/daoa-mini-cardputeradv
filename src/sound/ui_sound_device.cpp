@@ -14,7 +14,7 @@ namespace daoa {
 namespace {
 
 constexpr uint32_t kRate = 22050;
-constexpr float kVolume = 0.32f;  // discret ; le volume maître reste celui de M5
+constexpr float kVolume = 0.55f;  // discret ; le volume maître reste celui de M5
 
 // Une note : fréquence, durée, retard de départ (mélange dans le buffer).
 struct Partial {
@@ -49,8 +49,12 @@ struct Clip {
     size_t len = 0;
 };
 
-// Pentatonique la mineur : A3 C4 D4 E4 G4 A4.
-constexpr float kScale[6] = {220.f, 261.63f, 293.66f, 329.63f, 392.f, 440.f};
+// Pentatonique la mineur, DEUX OCTAVES AU-DESSUS de l'écriture naturelle :
+// A5 C6 D6 E6 G6 A6. Le haut-parleur de 1 W du Cardputer ne restitue
+// pratiquement rien sous ~400 Hz — une gamme en A3–A4 est inaudible sur
+// l'appareil (constaté le 2026-08-09). Les rapports musicaux sont intacts,
+// seul le registre change : tout tombe désormais dans la bande efficace.
+constexpr float kScale[6] = {880.f, 1046.5f, 1174.66f, 1318.51f, 1568.f, 1760.f};
 
 Clip makeClip(Sound s) {
     Clip c;
@@ -67,25 +71,27 @@ Clip makeClip(Sound s) {
             break;
         }
         case Sound::kMutation: {
-            // Octave grave, un souffle après la note du trait.
-            const Partial p[] = {{110.f, 0.30f, 0.05f, 0.8f}};
-            c.data = synth(p, 1, 0.36f, c.len);
+            // Une quinte au-dessus de la tonique, un souffle après le trait :
+            // la mutation s'entend sans descendre hors de la bande utile.
+            const Partial p[] = {{1318.51f, 0.26f, 0.06f, 0.7f}};
+            c.data = synth(p, 1, 0.34f, c.len);
             break;
         }
         case Sound::kComplete: {
-            // Quinte descendante douce : E4 puis A3.
-            const Partial p[] = {{329.63f, 0.22f, 0.f, 0.9f}, {220.f, 0.34f, 0.14f, 1.f}};
-            c.data = synth(p, 2, 0.5f, c.len);
+            // Quinte descendante : E6 puis A5.
+            const Partial p[] = {{1318.51f, 0.22f, 0.f, 0.9f}, {880.f, 0.36f, 0.14f, 1.f}};
+            c.data = synth(p, 2, 0.52f, c.len);
             break;
         }
         case Sound::kChime: {
-            // La lecture du lieu se pose : A4 très doux, longue queue.
-            const Partial p[] = {{440.f, 0.4f, 0.f, 0.55f}, {659.25f, 0.3f, 0.02f, 0.2f}};
+            // La lecture du lieu se pose : E6 doux, une octave par-dessus.
+            const Partial p[] = {{1318.51f, 0.4f, 0.f, 0.5f}, {2637.f, 0.28f, 0.02f, 0.18f}};
             c.data = synth(p, 2, 0.42f, c.len);
             break;
         }
         case Sound::kTick: {
-            const Partial p[] = {{1318.5f, 0.03f, 0.f, 0.35f}};
+            // Au-dessus de la gamme, pour ne pas s'y confondre.
+            const Partial p[] = {{2093.f, 0.03f, 0.f, 0.35f}};
             c.data = synth(p, 1, 0.035f, c.len);
             break;
         }

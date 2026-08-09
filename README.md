@@ -78,8 +78,25 @@ with the `w` key:
 | `esc` | back |
 
 Sounds are soft-decaying PCM sinusoids, never a square buzzer: the six
-lines walk up a **pentatonic scale** (A3 → A4), a low octave doubles the
+lines walk up a **pentatonic scale** (A5 → A6), a fifth above marks the
 changing lines, and a descending fifth resolves when the result appears.
+
+<details>
+<summary>Why that scale sits two octaves higher than it "should"</summary>
+
+The scale was first written where it reads naturally on paper — A3 to A4,
+220 to 440 Hz. On the device, the casting was **completely silent** while
+the interface ticks were perfectly audible.
+
+Nothing wrong with the code: a 1 W micro speaker in a pocket-sized
+enclosure has its resonance around 1 kHz and rolls off sharply below
+~400 Hz. The notes were being played, faithfully, into a band the hardware
+cannot reproduce. Transposing the whole scale up two octaves — musical
+relationships untouched, register moved into the speaker's efficient band —
+fixed it. Worth remembering before designing any audio for this class of
+device.
+
+</details>
 
 ---
 
@@ -274,6 +291,18 @@ The project documentation is in French.
 | [docs/03](docs/03_MECANIQUE_TIRAGE.md) | **casting specification** — source of truth |
 | [docs/04](docs/04_UX_RENDU.md) | screens, visual direction, fonts, animation |
 | [docs/05](docs/05_ROADMAP.md) | phases and current state |
+
+---
+
+## Licence
+
+The **code** in this repository is released under the [MIT licence](LICENSE)
+— take it, learn from it, build on it.
+
+What the licence does *not* cover, because it is not in the repository:
+the **Daoa brand** (lettermark, seal, visual identity) and the **Yi Jing
+corpus** written for Daoa. Those stay proprietary, and are generated
+locally from private sources.
 
 ---
 
