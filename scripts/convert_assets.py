@@ -12,17 +12,21 @@ Sorties (ne pas éditer à la main) :
   - src/ui/assets/wordmark_data.h   masque 8 bits + couleur de marque
   - src/ui/assets/ds_assets.h       masques du design system + fond promo 565
 
-Usage : python3 scripts/convert_assets.py
+Usage : DAOA_IOS_PATH=... python3 scripts/convert_assets.py
 """
 
+import os
 from pathlib import Path
 
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-WORDMARK_SRC = Path(
-    "$DAOA_IOS_PATH/Daoa/Resources/Assets.xcassets/"
-    "WordmarkSplash.imageset/dark.png"
+
+# Source privée, hors de ce dépôt : $DAOA_IOS_PATH doit pointer sur le
+# dépôt Daoa 2 iOS, d'où vient le lettermark.
+DAOA_IOS = Path(os.environ.get("DAOA_IOS_PATH", ""))
+WORDMARK_SRC = (
+    DAOA_IOS / "Daoa/Resources/Assets.xcassets/WordmarkSplash.imageset/dark.png"
 )
 BITMAP_DIR = ROOT / ".claude/skills/daoa-mini-design/assets/bitmap"
 OUT_DIR = ROOT / "src/ui/assets"
@@ -138,6 +142,11 @@ def write_ds_assets() -> None:
 
 
 if __name__ == "__main__":
+    if not WORDMARK_SRC.is_file():
+        raise SystemExit(
+            f"Lettermark introuvable : {WORDMARK_SRC}\n"
+            "Renseigner $DAOA_IOS_PATH (dépôt Daoa 2 iOS, hors de ce dépôt)."
+        )
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     write_wordmark()
     write_ds_assets()

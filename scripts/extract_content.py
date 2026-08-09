@@ -9,17 +9,24 @@ Sorties (ne pas éditer à la main) :
   - src/core/kingwen_table.h        : table 64 entrées, bit 0 = ligne basse
   - src/content/hexagrams_data.h    : struct + 64 figures UTF-8
 
-Usage : python3 scripts/extract_content.py [chemin_depot_v1]
+Usage :
+    DAOA_V1_PATH=... DAOA_IOS_PATH=... python3 scripts/extract_content.py
+    python3 scripts/extract_content.py <chemin_v1> <chemin_daoa_ios>
 """
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
 
-DEFAULT_V1 = "$DAOA_V1_PATH"
-DEFAULT_V2 = "$DAOA_IOS_PATH"
+# Sources privées, hors de ce dépôt. Renseigner par variable
+# d'environnement, ou passer les chemins en arguments.
+#   DAOA_V1_PATH  : le prototype Daoa v1 (mécanique + textes courts)
+#   DAOA_IOS_PATH : Daoa 2 iOS (corpus détaillé des 64 figures)
+DEFAULT_V1 = os.environ.get("DAOA_V1_PATH", "")
+DEFAULT_V2 = os.environ.get("DAOA_IOS_PATH", "")
 ROOT = Path(__file__).resolve().parent.parent
 
 SWIFT_STR = r'"((?:[^"\\]|\\.)*)"'
@@ -64,8 +71,21 @@ def split_name(name: str) -> tuple[str, str, str]:
     return hanzi.strip(), pinyin.strip(), title.strip()
 
 
+def source(argv_index: int, default: str, env_name: str, label: str) -> Path:
+    value = sys.argv[argv_index] if len(sys.argv) > argv_index else default
+    if not value:
+        raise SystemExit(
+            f"Chemin de {label} inconnu : passer ${env_name} ou l'argument "
+            f"n°{argv_index}."
+        )
+    path = Path(value)
+    if not path.is_dir():
+        raise SystemExit(f"{label} introuvable : {path}")
+    return path
+
+
 def main() -> None:
-    v1 = Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_V1)
+    v1 = source(1, DEFAULT_V1, "DAOA_V1_PATH", "Daoa v1")
     hex_src = (v1 / "shared/data/hexagrams.ts").read_text(encoding="utf-8")
     calc_src = (v1 / "shared/logic/hexagramCalculator.ts").read_text(encoding="utf-8")
 
@@ -138,7 +158,7 @@ def main() -> None:
     (ROOT / "src/content/hexagrams_data.h").write_text("".join(out), encoding="utf-8")
 
     # ---- Textes détaillés (corpus Daoa 2, daoa-ios) --------------------
-    v2 = Path(sys.argv[2] if len(sys.argv) > 2 else DEFAULT_V2)
+    v2 = source(2, DEFAULT_V2, "DAOA_IOS_PATH", "Daoa 2 iOS")
     gen_src = (v2 / "Daoa/Model/HexagramGeneral.swift").read_text(encoding="utf-8")
     cls_src = (v2 / "Daoa/Model/HexagramClassic.swift").read_text(encoding="utf-8")
 

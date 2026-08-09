@@ -10,10 +10,11 @@ résolution).
 Sortie : docs/m5burner/ — l'affiche puis les écrans réels, dans l'ordre du
 carrousel. Le lettermark vient des sources privées (voir CLAUDE.md).
 
-Usage : python3 scripts/make_store_images.py
+Usage : DAOA_IOS_PATH=... python3 scripts/make_store_images.py
 """
 
 import math
+import os
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -22,8 +23,9 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs/m5burner"
 SHOTS = ROOT / "docs/images"
 OUT.mkdir(parents=True, exist_ok=True)
-WORDMARK = Path("$DAOA_IOS_PATH/Daoa/Resources/Assets.xcassets/"
-                "WordmarkSplash.imageset/dark.png")
+# Source privée : $DAOA_IOS_PATH pointe sur le dépôt Daoa 2 iOS.
+WORDMARK = (Path(os.environ.get("DAOA_IOS_PATH", ""))
+            / "Daoa/Resources/Assets.xcassets/WordmarkSplash.imageset/dark.png")
 
 W, H = 1200, 900
 BLACK, PAPER = (0, 0, 0), (236, 228, 210)

@@ -55,8 +55,8 @@ docs/
 
 ## Pipeline de contenu
 
-`scripts/extract_content.py` lit dans le dépôt v1 (chemin par défaut
-`$DAOA_V1_PATH`) :
+`scripts/extract_content.py` lit dans le dépôt v1, localisé par la
+variable d'environnement `$DAOA_V1_PATH` (ou passé en argument) :
 
 1. `shared/data/hexagrams.ts` — 64 × {number, name, description, nameEn,
    descriptionEn}. Le champ `name` (« 乾 Qián - Le Créatif ») est décomposé
@@ -64,5 +64,9 @@ docs/
 2. La table `BINARY_TO_HEXAGRAM` de `shared/logic/hexagramCalculator.ts`
    (chaînes haut→bas), convertie en table indexée par bits bas→haut.
 
-Sortie : `src/content/hexagrams_data.h` (constantes, UTF-8) + garde-fous
-(64 entrées, bijection King Wen). Relancer : `python3 scripts/extract_content.py`.
+Le corpus détaillé (portrait, Jugement, Image, sens des six traits) vient
+de Daoa 2 iOS, localisé par `$DAOA_IOS_PATH`.
+
+Sortie : `src/content/hexagrams_data.h` et `hexagram_details_data.h`
+(constantes, UTF-8) + garde-fous (64 entrées, bijection King Wen).
+Relancer : `DAOA_V1_PATH=… DAOA_IOS_PATH=… python3 scripts/extract_content.py`.

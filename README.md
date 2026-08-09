@@ -195,6 +195,11 @@ The distributable image is `firmware.factory.bin` (bootloader + partition
 table + app, written at offset 0) — not `firmware.bin`, which is the
 application alone.
 
+The two generator scripts locate their private sources through
+`$DAOA_V1_PATH` and `$DAOA_IOS_PATH`; no machine path is written into the
+repository. Without them the scripts stop with a clear message, and the
+generated headers they produce are not versioned — see below.
+
 Three PlatformIO environments: the firmware (Arduino-ESP32 3.x through
 pioarduino), the **SDL simulator**, and the **native tests**.
 

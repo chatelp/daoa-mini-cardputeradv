@@ -28,7 +28,7 @@ court FR/EN) → écran promo avec QR code vers l'app complète.
 
 ## Règle v1 (identique à daoa-ios)
 
-Daoa v1 (`$DAOA_V1_PATH`) est une
+Daoa v1 (dépôt privé, chemin dans `$DAOA_V1_PATH`) est une
 **spécification de comportement, jamais une source de code**. On reproduit la
 mécanique observée (documentée dans `docs/03_MECANIQUE_TIRAGE.md`), on ne
 porte ni code, ni structure. Le contenu (textes des 64 figures) en est
@@ -72,9 +72,10 @@ ni le contenu Daoa**. Sont exclus du versionnage et purgés de l'historique :
   (patrimoine mathématique, pas du contenu Daoa).
 
 Conséquence assumée : un clone public **ne compile pas** sans les sources
-privées (`scripts/extract_content.py` et `scripts/convert_assets.py`
-exigent daoa v1, daoa-ios et le skill design). Sur cette machine, tout est
-en place — régénérer avec ces deux scripts si besoin. Avant tout commit
+privées. `scripts/extract_content.py` et `scripts/convert_assets.py` les
+localisent par `$DAOA_V1_PATH` et `$DAOA_IOS_PATH` — **aucun chemin de
+machine n'est écrit dans le dépôt**. Sur ce poste : `source private/env.sh`
+puis relancer les deux scripts. Avant tout commit
 d'un nouveau fichier généré, se demander : encode-t-il de la marque ou du
 contenu ? Si oui, il rejoint le `.gitignore`.
 
