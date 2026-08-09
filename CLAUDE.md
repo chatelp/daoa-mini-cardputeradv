@@ -48,6 +48,27 @@ extrait par script — c'est du contenu Daoa original, pas du code.
 - La logique de tirage (`src/core/`) est du C++ pur, sans dépendance
   Arduino/M5, testée par `pio test` en natif.
 
+## Frontière public/privé (ferme — décidée le 2026-08-09)
+
+Le dépôt GitHub est **public** : il contient le moteur (logique de tirage,
+composants de rendu, tokens, simulateur, tests, docs), **jamais la marque
+ni le contenu Daoa**. Sont exclus du versionnage et purgés de l'historique :
+
+- `design/` (handoff, retours) et `.claude/skills/daoa-mini-design/`
+  (le design system livré, avec les assets de marque) ;
+- les en-têtes **générés** qui encodent marque ou contenu :
+  `src/content/hexagrams_data.h`, `src/content/hexagram_details_data.h`
+  (corpus propriétaire bilingue) et `src/ui/assets/` (lettermark, sceau,
+  masques, fond promo). `src/core/kingwen_table.h` reste public
+  (patrimoine mathématique, pas du contenu Daoa).
+
+Conséquence assumée : un clone public **ne compile pas** sans les sources
+privées (`scripts/extract_content.py` et `scripts/convert_assets.py`
+exigent daoa v1, daoa-ios et le skill design). Sur cette machine, tout est
+en place — régénérer avec ces deux scripts si besoin. Avant tout commit
+d'un nouveau fichier généré, se demander : encode-t-il de la marque ou du
+contenu ? Si oui, il rejoint le `.gitignore`.
+
 ## Standard visuel
 
 Le même que Daoa 2 : calme, précis, premium, minimal, typographique,

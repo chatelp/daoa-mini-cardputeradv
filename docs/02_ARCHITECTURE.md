@@ -47,6 +47,11 @@ docs/
   `main_sdl.cpp` (clavier SDL) font chacun le mapping.
 - `content/hexagrams_data.h` est généré ; toute correction de texte se fait
   dans la source v1 ou dans le script, jamais dans le fichier généré.
+- **Frontière public/privé** (CLAUDE.md) : les en-têtes générés portant le
+  contenu ou la marque (`content/hexagrams_data.h`,
+  `content/hexagram_details_data.h`, `ui/assets/`) ne sont **pas
+  versionnés** — présents sur disque, régénérables par les scripts, exclus
+  du dépôt public. Un clone sans les sources privées ne compile pas.
 
 ## Pipeline de contenu
 
