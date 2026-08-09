@@ -191,6 +191,10 @@ pio run -e sim && ./.pio/build/sim/program
 pio run -e cardputer-adv -t upload
 ```
 
+The distributable image is `firmware.factory.bin` (bootloader + partition
+table + app, written at offset 0) — not `firmware.bin`, which is the
+application alone.
+
 Three PlatformIO environments: the firmware (Arduino-ESP32 3.x through
 pioarduino), the **SDL simulator**, and the **native tests**.
 
