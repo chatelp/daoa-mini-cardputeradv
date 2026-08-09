@@ -125,17 +125,24 @@ int runShots() {
 
     app.handleKey(Key::kDown, 9450);                        // détail FR
     shot(app, 9800, "09_texte_p1_fr.bmp");
-    app.handleKey(Key::kReset, 9850);
+    for (uint32_t t = 9810; t <= 10400; t += 40) {
+        app.handleKey(Key::kDown, t);                       // jusqu'à structure
+    }
+    shot(app, 10500, "10_structure_fr.bmp");
+    app.handleKey(Key::kLang, 10550);
+    shot(app, 10900, "11_structure_en.bmp");
+    app.handleKey(Key::kLang, 10950);
+    app.handleKey(Key::kReset, 11000);                      // esc → résultat
 
-    app.handleKey(Key::kAction, 9900);                      // → promo
-    shot(app, 10300, "10_promo.bmp");
+    app.handleKey(Key::kAction, 11100);                     // → promo
+    shot(app, 11500, "12_promo.bmp");
 
-    app.handleKey(Key::kHelp, 10400);                       // aide (FR ici)
-    shot(app, 10800, "11_aide_p1_fr.bmp");
-    for (uint32_t t = 10850; t <= 11150; t += 50) {
+    app.handleKey(Key::kHelp, 11600);                       // aide (FR ici)
+    shot(app, 12000, "13_aide_p1_fr.bmp");
+    for (uint32_t t = 12050; t <= 12350; t += 50) {
         app.handleKey(Key::kDown, t);                       // jusqu'en bas
     }
-    shot(app, 11300, "12_aide_touches_fr.bmp");
+    shot(app, 12500, "14_aide_touches_fr.bmp");
 
     return 0;
 }
@@ -170,6 +177,8 @@ int runFontTest() {
     // Les trois manquants d'efontCN, tentés en efontJA.
     s.setFont(&fonts::efontJA_16);
     s.drawString("遯夬姤", 190, 40);
+    s.setFont(&fonts::efontJA_12);
+    printf("larg. '…'=%d  '.'=%d  'a'=%d px\n", s.textWidth("…"), s.textWidth("."), s.textWidth("a"));
     daoa::App tmp(simRand);  // inutilisé : garde la parité de liens
     (void)tmp;
     writeBmp(s, g_shotDir + "/00_fonttest.bmp");

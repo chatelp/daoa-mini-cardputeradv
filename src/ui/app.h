@@ -34,7 +34,7 @@ class App {
     lgfx::LGFX_Sprite& frame() { return frame_; }
 
   private:
-    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kPromo, kHelp };
+    enum class Screen : uint8_t { kWelcome, kCasting, kResult, kDetail, kStructure, kPromo, kHelp };
 
     void switchTo(Screen s, uint32_t now);
     bool ensureFrame();
@@ -45,13 +45,15 @@ class App {
     void drawCasting(uint32_t now);
     void drawResult(uint32_t now);
     void drawDetail(uint32_t now);
+    void drawStructure(uint32_t now);
     void drawPromo(uint32_t now);
     void drawHelp(uint32_t now);
     void buildDetailDoc();
     void buildHelpDoc();
     void appendDocText(const char* text, bool meta);
     // Rendu commun des écrans-documents (lecture détaillée, aide).
-    void drawDocScreen(const char* context, const char* footerLegend, uint32_t now);
+    void drawDocScreen(const char* context, ui::FooterId footer, uint32_t now);
+    int docPageCount() const;
 
     CastSession session_;
     Screen screen_ = Screen::kWelcome;

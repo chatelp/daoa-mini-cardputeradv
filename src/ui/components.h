@@ -7,9 +7,12 @@
 
 #include <cstdint>
 
+#include "../content/content.h"
 #include "assets/ds_assets.h"
+#include "daoa_key_labels.h"
 #include "daoa_tokens.h"
 #include "gfx.h"
+#include "screen_footers.h"
 
 namespace daoa::ui {
 
@@ -17,14 +20,9 @@ using Sprite = lgfx::LGFX_Sprite;
 
 // ---- structures ---------------------------------------------------------
 
-// Un raccourci de la barre du bas : la touche en papier, le libellé en
-// pierre. label peut être nul (touche seule). Trois raccourcis maximum.
-struct FooterAction {
-    const char* key;
-    const char* label;
-};
-
 // Un segment d'invite : key est rendu en papier, text en pierre.
+// key et text sont des identifiants de daoa_key_labels.h (ou des littéraux,
+// qui passent tels quels — touches sérigraphiées, textes dynamiques).
 struct PromptSeg {
     const char* key;
     const char* text;
@@ -83,16 +81,19 @@ void drawDocHeader(Sprite& s, const Palette& p, const char* context, int page = 
                    int pages = 1);
 
 // Bande inférieure de 18 px : légende en pierre à gauche, raccourcis à
-// droite (touche papier, libellé pierre, séparés par « · »). count ≤ 3.
-void drawFooterBar(Sprite& s, const Palette& p, const char* legend,
-                   const FooterAction* actions, int count);
+// droite (touche papier, libellé pierre, séparés par « · »). La barre est
+// décrite par une FooterSpec (identifiants) et résolue ici selon la langue
+// — les écrans ne portent aucune chaîne en dur (HANDOFF-v2, tâche 2).
+void drawFooterBar(Sprite& s, const Palette& p, Lang lang, const FooterSpec& spec);
 
 // Pastilles de page : carrés de DOT px espacés de DOT_GAP, jamais des ronds.
 // xRight = bord droit de l'emprise ; cy = centre vertical.
 void drawPageDots(Sprite& s, const Palette& p, int xRight, int cy, int count, int index);
 
 // Invite centrée dans la bande de contenu. Une seule invite par écran.
-void drawPrompt(Sprite& s, const Palette& p, int y, const PromptSeg* segs, int count);
+// Les segments sont résolus par keyLabel() selon la langue.
+void drawPrompt(Sprite& s, const Palette& p, Lang lang, int y, const PromptSeg* segs,
+                int count);
 
 // Mentions des coins hauts de l'accueil (≤ 16 caractères chacune, pierre).
 void drawCornerHints(Sprite& s, const Palette& p, const char* left, const char* right);

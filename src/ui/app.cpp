@@ -3,8 +3,12 @@
 #include <cstdio>
 #include <cstring>
 
+#include <vector>
+
+#include "../content/trigrams.h"
 #include "assets/wordmark_data.h"
 #include "qrcode.h"
+#include "text_rules.h"
 
 namespace daoa {
 
@@ -44,20 +48,14 @@ struct HelpSection {
 
 struct Strings {
     const char* subtitle;
-    const char* spaceKey;
     const char* helpHint;
     const char* langHint;
-    const char* startText;      // invite accueil, après « espace »
     const char* castLineFmt;    // invite tirage, %d = prochaine ligne
     const char* castDoneText;   // invite fin de tirage
-    const char* figureCaption;
-    const char* complementCaption;
-    const char* stableCaption;
-    const char* textLabel;      // libellé du raccourci ↓
-    const char* homeLabel;      // libellé esc sur l'aide
     const char* promoTag1;
     const char* promoTag2;
-    const char* promoHome;      // « accueil » après esc sur la promo
+    const char* posUpper;       // écran structure
+    const char* posLower;
     const char* detailPortrait;
     const char* detailJudgment;
     const char* detailImage;
@@ -145,20 +143,14 @@ constexpr const char* kLineTitlesEn[6] = {
 
 constexpr Strings kStringsFr{
     "Un tirage du Yi Jing",
-    "espace",
     "h · aide",
     "L · english",
-    "commencer",
     "tirer la ligne %d / 6",
     "lire la figure",
-    "figure obtenue",
-    "complémentaire",
-    "figure stable",
-    "texte",
-    "accueil",
     "L'app complète",
     "du Yi Jing",
-    "accueil",
+    "haut",
+    "bas",
     "portrait",
     "jugement",
     "image",
@@ -170,20 +162,14 @@ constexpr Strings kStringsFr{
 
 constexpr Strings kStringsEn{
     "A Yi Jing casting",
-    "space",
     "h · help",
     "L · français",
-    "begin",
     "cast line %d / 6",
     "read the figure",
-    "first figure",
-    "complementary",
-    "stable figure",
-    "text",
-    "home",
-    "The full app",
-    "of the Yi Jing",
-    "home",
+    "The complete",
+    "Yi Jing app",
+    "upper",
+    "lower",
     "portrait",
     "judgment",
     "image",
@@ -213,38 +199,31 @@ void sessionLines(const CastSession& session, bool complementary, ui::HexLine* o
     }
 }
 
-// Coupe gloss en deux lignes au plus (largeur pleine colonne), « … » si déborde.
-void wrapGloss(lgfx::LGFX_Sprite& s, const char* text, char* line1, char* line2, size_t cap) {
+// Enveloppe un texte en lignes de colonne pleine (mesure fonte réelle).
+std::vector<std::string> wrapLines(lgfx::LGFX_Sprite& s, const char* text, int maxW) {
     s.setFont(&fonts::efontJA_12);
-    line1[0] = line2[0] = '\0';
-    char* out[2] = {line1, line2};
-    int lineIdx = 0;
-    const char* lineStart = text;
-    int lineLen = 0;
+    std::vector<std::string> lines;
+    std::string line;
     const char* p = text;
     char candidate[256];
-    while (*p != '\0' && lineIdx < 2) {
+    const char* lineStart = text;
+    int lineLen = 0;
+    while (*p != '\0') {
         const char* wordEnd = p;
         while (*wordEnd != '\0' && *wordEnd != ' ') ++wordEnd;
         snprintf(candidate, sizeof(candidate), "%.*s",
                  static_cast<int>(wordEnd - lineStart), lineStart);
-        if (lineLen == 0 || s.textWidth(candidate) <= MINI_COL_W) {
+        if (lineLen == 0 || s.textWidth(candidate) <= maxW) {
             lineLen = static_cast<int>(wordEnd - lineStart);
         } else {
-            snprintf(out[lineIdx], cap, "%.*s", lineLen, lineStart);
-            ++lineIdx;
+            lines.emplace_back(lineStart, static_cast<size_t>(lineLen));
             lineStart = p;
             lineLen = static_cast<int>(wordEnd - p);
         }
         p = (*wordEnd == ' ') ? wordEnd + 1 : wordEnd;
     }
-    if (lineIdx < 2 && lineLen > 0) {
-        snprintf(out[lineIdx], cap, "%.*s", lineLen, lineStart);
-    } else if (lineIdx >= 2 && *p != '\0') {
-        // Déborde : la lecture complète est à une touche (↓).
-        const size_t n = strlen(line2);
-        if (n + 4 < cap) memcpy(line2 + n, "…", 4);
-    }
+    if (lineLen > 0) lines.emplace_back(lineStart, static_cast<size_t>(lineLen));
+    return lines;
 }
 
 }  // namespace
@@ -288,8 +267,10 @@ void App::handleKey(Key k, uint32_t now) {
         // détaillée au résultat, partout ailleurs à l'accueil.
         if (screen_ == Screen::kHelp) {
             switchTo(helpReturn_, now);
+        } else if (screen_ == Screen::kDetail || screen_ == Screen::kStructure) {
+            switchTo(Screen::kResult, now);
         } else {
-            switchTo(screen_ == Screen::kDetail ? Screen::kResult : Screen::kWelcome, now);
+            switchTo(Screen::kWelcome, now);
         }
         return;
     }
@@ -329,12 +310,14 @@ void App::handleKey(Key k, uint32_t now) {
 
         case Screen::kDetail:
         case Screen::kHelp: {
-            const int pageCount =
-                static_cast<int>((doc_.size() + MINI_READER_LINES - 1) / MINI_READER_LINES);
+            const int pageCount = docPageCount();
             if (k == Key::kDown || k == Key::kAction || k == Key::kNext) {
                 if (docPage_ < pageCount - 1) {
                     ++docPage_;
                     enter_.start(now, 150);
+                } else if (k == Key::kDown && screen_ == Screen::kDetail) {
+                    // ↓ après la dernière page de texte → structure.
+                    switchTo(Screen::kStructure, now);
                 }
             } else if (k == Key::kUp || k == Key::kPrev) {
                 if (docPage_ > 0) {
@@ -344,6 +327,14 @@ void App::handleKey(Key k, uint32_t now) {
             }
             break;
         }
+
+        case Screen::kStructure:
+            if (k == Key::kUp) {
+                // Remonte dans le texte, sur sa dernière page.
+                switchTo(Screen::kDetail, now);
+                docPage_ = docPageCount() - 1;
+            }
+            break;
 
         case Screen::kPromo:
             if (k == Key::kAction) switchTo(Screen::kWelcome, now);
@@ -376,6 +367,7 @@ void App::renderFrame(uint32_t now) {
         case Screen::kCasting: drawCasting(now); break;
         case Screen::kResult: drawResult(now); break;
         case Screen::kDetail: drawDetail(now); break;
+        case Screen::kStructure: drawStructure(now); break;
         case Screen::kPromo: drawPromo(now); break;
         case Screen::kHelp: drawHelp(now); break;
     }
@@ -412,8 +404,8 @@ void App::drawWelcome(uint32_t now) {
     const float breath = 0.45f + 0.55f * anim::pulse(now, 2800);
     ui::Palette pp = p;
     pp.meta = fade(anim::lerp565(MINI_BG, MINI_TEXT_META, breath), now);
-    const ui::PromptSeg segs[] = {{t.spaceKey, nullptr}, {nullptr, t.startText}};
-    ui::drawPrompt(s, pp, kWelcomePromptY, segs, 2);
+    const ui::PromptSeg segs[] = {{"space", nullptr}, {nullptr, "begin"}};
+    ui::drawPrompt(s, pp, lang_, kWelcomePromptY, segs, 2);
 }
 
 void App::drawCasting(uint32_t now) {
@@ -438,8 +430,8 @@ void App::drawCasting(uint32_t now) {
     } else {
         snprintf(text, sizeof(text), t.castLineFmt, revealed + 1);
     }
-    const ui::PromptSeg segs[] = {{t.spaceKey, nullptr}, {nullptr, text}};
-    ui::drawPrompt(s, p, kCastingPromptY, segs, 2);
+    const ui::PromptSeg segs[] = {{"space", nullptr}, {nullptr, text}};
+    ui::drawPrompt(s, p, lang_, kCastingPromptY, segs, 2);
 }
 
 void App::drawResult(uint32_t now) {
@@ -456,54 +448,98 @@ void App::drawResult(uint32_t now) {
     snprintf(context, sizeof(context), "%d · %s", h.number, h.pinyin);
     ui::drawDocHeader(s, p, context, resultPage_ + 1, 2);
 
-    char gloss1[160], gloss2[160];
-    wrapGloss(s, description(h, lang_), gloss1, gloss2, sizeof(gloss1));
-    ui::drawFigureTitle(s, p, h.hanzi, glyphFont(number), title(h, lang_), gloss1,
-                        gloss2[0] ? gloss2 : nullptr, kFigureTitleTop);
+    const std::vector<std::string> gloss =
+        clampGloss(wrapLines(s, description(h, lang_), MINI_COL_W));
+    ui::drawFigureTitle(s, p, h.hanzi, glyphFont(number), title(h, lang_),
+                        gloss.empty() ? nullptr : gloss[0].c_str(),
+                        gloss.size() > 1 ? gloss[1].c_str() : nullptr, kFigureTitleTop);
 
     ui::HexLine lines[6];
     sessionLines(session_, complementary, lines);
     ui::drawHexagram(s, p, kMiniFigureX, kMiniFigureY, lines, 6, ui::YAO_M,
                      !complementary);
 
-    const char* legend = complementary
-                             ? (stable ? t.stableCaption : t.complementCaption)
-                             : t.figureCaption;
-    const ui::FooterAction actions[] = {
-        {"↓", t.textLabel}, {t.spaceKey, nullptr}, {"esc", nullptr}};
-    ui::drawFooterBar(s, p, legend, actions, 3);
+    (void)t;
+    const ui::FooterId footer = complementary
+                                    ? (stable ? ui::kFooterResultStable : ui::kFooterResultOther)
+                                    : ui::kFooterResultDrawn;
+    ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[footer]);
 }
 
-void App::drawDocScreen(const char* context, const char* footerLegend, uint32_t now) {
+int App::docPageCount() const {
+    return static_cast<int>((doc_.size() + MINI_READER_LINES - 1) / MINI_READER_LINES);
+}
+
+void App::drawDocScreen(const char* context, ui::FooterId footer, uint32_t now) {
     auto& s = frame_;
     const ui::Palette p = palette(now);
-    const int pageCount =
-        static_cast<int>((doc_.size() + MINI_READER_LINES - 1) / MINI_READER_LINES);
 
-    ui::drawDocHeader(s, p, context, docPage_ + 1, pageCount);
+    ui::drawDocHeader(s, p, context, docPage_ + 1, docPageCount());
 
     const size_t first = static_cast<size_t>(docPage_) * MINI_READER_LINES;
     const int count = static_cast<int>(
         doc_.size() - first < MINI_READER_LINES ? doc_.size() - first : MINI_READER_LINES);
     if (first < doc_.size()) ui::drawReader(s, p, doc_.data() + first, count);
 
-    if (footerLegend != nullptr) {
-        const ui::FooterAction actions[] = {{"esc", str(lang_).homeLabel}};
-        ui::drawFooterBar(s, p, footerLegend, actions, 1);
-    } else {
-        const ui::FooterAction actions[] = {{"↑↓", nullptr}, {"esc", nullptr}};
-        ui::drawFooterBar(s, p, nullptr, actions, 2);
-    }
+    ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[footer]);
 }
 
 void App::drawDetail(uint32_t now) {
     const HexagramInfo& h = hexagram(detailNumber_);
     char context[96];
     snprintf(context, sizeof(context), "%d · %s · %s", h.number, h.pinyin, title(h, lang_));
-    drawDocScreen(context, nullptr, now);
+    drawDocScreen(context, ui::kFooterDoc, now);
 }
 
-void App::drawHelp(uint32_t now) { drawDocScreen(str(lang_).helpTitle, "", now); }
+void App::drawHelp(uint32_t now) {
+    drawDocScreen(str(lang_).helpTitle, ui::kFooterHelp, now);
+}
+
+// Écran Structure (HANDOFF-v2, tâche 3) : les deux trigrammes de la figure,
+// dérivés de ses traits. Rangées aux ordonnées 38 (haut) et 74 (bas).
+void App::drawStructure(uint32_t now) {
+    auto& s = frame_;
+    const ui::Palette p = palette(now);
+    const Strings& t = str(lang_);
+    const HexagramInfo& h = hexagram(detailNumber_);
+
+    char context[96];
+    snprintf(context, sizeof(context), "%d · %s · %s", h.number, h.pinyin,
+             keyLabel("structure", lang_));
+    ui::drawDocHeader(s, p, context, 1, 1);
+
+    static const MaskAsset* kTrigramMasks[8] = {
+        &kMaskTrigramme1, &kMaskTrigramme2, &kMaskTrigramme3, &kMaskTrigramme4,
+        &kMaskTrigramme5, &kMaskTrigramme6, &kMaskTrigramme7, &kMaskTrigramme8,
+    };
+    struct Row {
+        uint8_t bits;
+        const char* position;
+        int y;
+    };
+    // Haut = lignes 4-5-6, bas = lignes 1-2-3 (bits bas → haut).
+    const Row rows[2] = {
+        {static_cast<uint8_t>((h.linesBits >> 3) & 7), t.posUpper, 38},
+        {static_cast<uint8_t>(h.linesBits & 7), t.posLower, 74},
+    };
+    s.setFont(&fonts::efontJA_12);
+    for (const Row& row : rows) {
+        const TrigramInfo& tri = trigramFromBits(row.bits);
+        const MaskAsset& m = *kTrigramMasks[tri.maskIndex - 1];
+        ui::drawMask(s, m, MINI_MARGIN_X, row.y, p.text, p.bg);
+        char name[64];
+        snprintf(name, sizeof(name), "%s · %s", tri.pinyin, trigramName(tri, lang_));
+        const int textY = row.y + (m.height - MINI_BODY_H) / 2;
+        s.setTextDatum(textdatum_t::top_left);
+        s.setTextColor(p.text, p.bg);
+        s.drawString(name, MINI_MARGIN_X + m.width + SP_8, textY);
+        s.setTextDatum(textdatum_t::top_right);
+        s.setTextColor(p.meta, p.bg);
+        s.drawString(row.position, MINI_W - MINI_MARGIN_X, textY);
+    }
+
+    ui::drawFooterBar(s, p, lang_, ui::kFooterSpecs[ui::kFooterStructure]);
+}
 
 // Découpe un texte en lignes (pointeurs dans le corpus, aucune copie) à la
 // largeur de colonne, avec la fonte du corps de texte.
@@ -595,7 +631,7 @@ void App::drawPromo(uint32_t now) {
     s.drawString("esc", MINI_MARGIN_X, kPromoEscY);
     s.setTextColor(p.meta, p.bg);
     char home[24];
-    snprintf(home, sizeof(home), " · %s", t.promoHome);
+    snprintf(home, sizeof(home), " · %s", keyLabel("home", lang_));
     s.drawString(home, MINI_MARGIN_X + s.textWidth("esc"), kPromoEscY);
 
     // QR généré une seule fois (URL constante).

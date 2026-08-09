@@ -79,32 +79,33 @@ void drawDocHeader(Sprite& s, const Palette& p, const char* context, int page, i
     }
 }
 
-void drawFooterBar(Sprite& s, const Palette& p, const char* legend,
-                   const FooterAction* actions, int count) {
+void drawFooterBar(Sprite& s, const Palette& p, Lang lang, const FooterSpec& spec) {
     s.setFont(bodyFont());
     s.setTextDatum(textdatum_t::top_left);
 
     // Raccourcis à droite : touche en papier, libellé en pierre.
-    if (count > 3) count = 3;
+    const int count = spec.actionCount > 3 ? 3 : spec.actionCount;
     const char* kSep = " · ";
+    const char* keys[3];
+    const char* labels[3];
     int total = 0;
     for (int i = 0; i < count; ++i) {
-        total += textWidthOf(s, bodyFont(), actions[i].key);
-        if (actions[i].label != nullptr) {
-            total += MINI_BODY_ADV + textWidthOf(s, bodyFont(), actions[i].label);
-        }
+        keys[i] = keyLabel(spec.actions[i].key, lang);
+        labels[i] = spec.actions[i].label ? keyLabel(spec.actions[i].label, lang) : nullptr;
+        total += textWidthOf(s, bodyFont(), keys[i]);
+        if (labels[i] != nullptr) total += MINI_BODY_ADV + textWidthOf(s, bodyFont(), labels[i]);
         if (i + 1 < count) total += textWidthOf(s, bodyFont(), kSep);
     }
     int x = MINI_W - MINI_MARGIN_X - total;
     for (int i = 0; i < count; ++i) {
         s.setTextColor(p.text, p.bg);
-        s.drawString(actions[i].key, x, kFooterTextY);
-        x += textWidthOf(s, bodyFont(), actions[i].key);
-        if (actions[i].label != nullptr) {
+        s.drawString(keys[i], x, kFooterTextY);
+        x += textWidthOf(s, bodyFont(), keys[i]);
+        if (labels[i] != nullptr) {
             x += MINI_BODY_ADV;
             s.setTextColor(p.meta, p.bg);
-            s.drawString(actions[i].label, x, kFooterTextY);
-            x += textWidthOf(s, bodyFont(), actions[i].label);
+            s.drawString(labels[i], x, kFooterTextY);
+            x += textWidthOf(s, bodyFont(), labels[i]);
         }
         if (i + 1 < count) {
             s.setTextColor(p.meta, p.bg);
@@ -114,11 +115,11 @@ void drawFooterBar(Sprite& s, const Palette& p, const char* legend,
     }
 
     // Légende à gauche, tronquée avant les raccourcis.
-    if (legend != nullptr) {
+    if (spec.legendId != nullptr) {
         s.setTextColor(p.meta, p.bg);
         s.setClipRect(MINI_MARGIN_X, MINI_FOOTER_Y,
                       MINI_W - 2 * MINI_MARGIN_X - total - SP_12, MINI_FOOTER_H);
-        s.drawString(legend, MINI_MARGIN_X, kFooterTextY);
+        s.drawString(keyLabel(spec.legendId, lang), MINI_MARGIN_X, kFooterTextY);
         s.clearClipRect();
     }
 }
@@ -132,23 +133,24 @@ void drawPageDots(Sprite& s, const Palette& p, int xRight, int cy, int count, in
     }
 }
 
-void drawPrompt(Sprite& s, const Palette& p, int y, const PromptSeg* segs, int count) {
+void drawPrompt(Sprite& s, const Palette& p, Lang lang, int y, const PromptSeg* segs,
+                int count) {
     s.setFont(bodyFont());
     s.setTextDatum(textdatum_t::top_left);
     const char* kSep = " · ";
 
+    const char* texts[4];
     int total = 0;
-    for (int i = 0; i < count; ++i) {
-        total += textWidthOf(s, bodyFont(), segs[i].key ? segs[i].key : segs[i].text);
+    for (int i = 0; i < count && i < 4; ++i) {
+        texts[i] = keyLabel(segs[i].key ? segs[i].key : segs[i].text, lang);
+        total += textWidthOf(s, bodyFont(), texts[i]);
         if (i + 1 < count) total += textWidthOf(s, bodyFont(), kSep);
     }
     int x = (MINI_W - total) / 2;
-    for (int i = 0; i < count; ++i) {
-        const bool isKey = segs[i].key != nullptr;
-        s.setTextColor(isKey ? p.text : p.meta, p.bg);
-        const char* text = isKey ? segs[i].key : segs[i].text;
-        s.drawString(text, x, y);
-        x += textWidthOf(s, bodyFont(), text);
+    for (int i = 0; i < count && i < 4; ++i) {
+        s.setTextColor(segs[i].key ? p.text : p.meta, p.bg);
+        s.drawString(texts[i], x, y);
+        x += textWidthOf(s, bodyFont(), texts[i]);
         if (i + 1 < count) {
             s.setTextColor(p.meta, p.bg);
             s.drawString(kSep, x, y);

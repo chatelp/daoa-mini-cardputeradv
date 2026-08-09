@@ -41,6 +41,14 @@ MASKS = [
     ("mutation-yin-8.png", "MutationYin8"),
     ("accueil-ornement-140x8.png", "OrnementAccueil"),
     ("sceau-36x46.png", "Sceau"),
+    ("trigramme-1-24x24.png", "Trigramme1"),
+    ("trigramme-2-24x24.png", "Trigramme2"),
+    ("trigramme-3-24x24.png", "Trigramme3"),
+    ("trigramme-4-24x24.png", "Trigramme4"),
+    ("trigramme-5-24x24.png", "Trigramme5"),
+    ("trigramme-6-24x24.png", "Trigramme6"),
+    ("trigramme-7-24x24.png", "Trigramme7"),
+    ("trigramme-8-24x24.png", "Trigramme8"),
 ]
 
 
