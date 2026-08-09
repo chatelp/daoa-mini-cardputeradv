@@ -5,7 +5,9 @@
 **Un tirage du Yi Jing, ligne à ligne, sur un ordinateur de poche.**
 M5Stack Cardputer ADV · ESP32-S3 · écran 240 × 135 · hors-ligne.
 
-![Daoa Mini — accueil, tirage, résultat, promo](docs/images/hero.png)
+![Daoa Mini — le lieu écoute](docs/m5burner/01-hero.png)
+
+> ### Le lieu écoute.
 
 Daoa Mini est un petit objet promotionnel pour l'app
 [**Daoa**](https://daoa.app) (iPhone / Android) : on tire six lignes à la
@@ -16,9 +18,11 @@ matériel de l'ESP32.
 
 Sa particularité : avant chaque tirage, l'appareil **écoute le lieu**.
 
+![Accueil, tirage, résultat, promo](docs/images/hero.png)
+
 ---
 
-## La lecture du lieu
+## Le lieu écoute
 
 <img src="docs/images/champ-vivant.gif" width="480" alt="Le champ ambiant en mouvement pendant un tirage">
 

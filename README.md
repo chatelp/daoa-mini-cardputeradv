@@ -5,7 +5,9 @@
 **A line-by-line Yi Jing casting, on a pocket computer.**
 M5Stack Cardputer ADV · ESP32-S3 · 240 × 135 display · fully offline.
 
-![Daoa Mini — home, casting, result, promo](docs/images/hero.png)
+![Daoa Mini — the place is listening](docs/m5burner/01-hero.png)
+
+> ### The place is listening.
 
 Daoa Mini is a small promotional object for the [**Daoa**](https://daoa.app)
 mobile app (iPhone / Android): you cast six lines by the traditional
@@ -16,9 +18,11 @@ account, no AI. The randomness comes from the ESP32's hardware generator.
 Its distinctive feature: before every casting, the device **listens to the
 place**.
 
+![Home, casting, result, promo](docs/images/hero.png)
+
 ---
 
-## Reading the place
+## The place is listening
 
 <img src="docs/images/champ-vivant.gif" width="480" alt="The ambient field moving during a casting">
 
