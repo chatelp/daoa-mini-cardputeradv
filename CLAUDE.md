@@ -114,3 +114,5 @@ validées visuellement (simulateur d'abord, appareil ensuite).
   vérité de la mécanique).
 - `docs/04_UX_RENDU.md` — écrans, direction visuelle, fontes, animations.
 - `docs/05_ROADMAP.md` — phases et état courant.
+- `docs/06_LANCEMENT.md` — textes de publication (Reddit, forum M5Stack),
+  et le relevé du climat communautaire vis-à-vis de l'assistance IA.
