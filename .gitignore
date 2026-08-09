@@ -2,6 +2,10 @@
 .vscode/
 .DS_Store
 
-# Livrables et références design (marque Daoa) — jamais dans le dépôt public
+# Marque et contenu Daoa : jamais dans le dépôt public.
+# (livrables design, skill, et les en-têtes GÉNÉRÉS qui les encodent)
 design/
 .claude/skills/daoa-mini-design/
+src/content/hexagrams_data.h
+src/content/hexagram_details_data.h
+src/ui/assets/
