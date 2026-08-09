@@ -25,6 +25,7 @@ constexpr uint32_t kShotSeed = 20260808u;
 uint32_t g_seed = 0;
 bool g_shotMode = false;
 bool g_fontTest = false;
+bool g_framesMode = false;
 std::string g_shotDir;
 
 // Hôte ambiant simulé : un scan de ~1,4 s qui « découvre » des réseaux
@@ -187,9 +188,11 @@ int runShots() {
     app.handleKey(Key::kAction, 12050);                     // rétablit
     app.handleKey(Key::kReset, 12100);                      // esc → résultat
 
+    app.handleKey(Key::kLang, 12150);                       // → EN
     app.handleKey(Key::kAction, 12200);                     // → promo
     shot(app, 12600, "15_promo.bmp");
 
+    app.handleKey(Key::kLang, 12650);                       // → FR
     app.handleKey(Key::kHelp, 12700);                       // aide (FR ici)
     shot(app, 13100, "16_aide_p1_fr.bmp");
     for (uint32_t t = 13150; t <= 13500; t += 50) {
@@ -197,6 +200,35 @@ int runShots() {
     }
     shot(app, 13700, "17_aide_touches_fr.bmp");
 
+    return 0;
+}
+
+// Suite de frames du champ ambiant pendant un tirage, pour en faire un GIF :
+// le champ ne se juge qu'en mouvement.
+int runFrames() {
+    daoa::App app(simRand, kSimAmbientHost, kSimSoundHost);
+    using daoa::Key;
+    uint32_t t = 1000;
+    app.handleKey(Key::kAction, t);          // → tirage, scan lancé
+    t = 2600;                                 // scan posé
+    app.renderFrame(t);
+    app.handleKey(Key::kAction, t);           // trait 1
+    t += 700;
+    app.handleKey(Key::kAction, t);           // trait 2
+    t += 700;
+    app.handleKey(Key::kAction, t);           // trait 3
+
+    char name[32];
+    // 60 frames à 66 ms ≈ 4 s de champ vivant, un trait posé en cours de route.
+    for (int i = 0; i < 60; ++i) {
+        const uint32_t frameT = t + static_cast<uint32_t>(i) * 66;
+        if (i == 24) app.handleKey(Key::kAction, frameT);  // trait 4 : le champ répond
+        if (i == 48) app.handleKey(Key::kAction, frameT);  // trait 5
+        app.renderFrame(frameT);
+        snprintf(name, sizeof(name), "/f%03d.bmp", i);
+        writeBmp(app.frame(), g_shotDir + name);
+    }
+    printf("60 frames dans %s\n", g_shotDir.c_str());
     return 0;
 }
 
@@ -283,6 +315,10 @@ int main(int argc, char** argv) {
             g_shotMode = true;
             g_shotDir = argv[++i];
             g_seed = kShotSeed;
+        } else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc) {
+            g_framesMode = true;
+            g_shotDir = argv[++i];
+            g_seed = kShotSeed;
         } else if (strcmp(argv[i], "--fonttest") == 0 && i + 1 < argc) {
             g_shotDir = argv[++i];
             g_seed = kShotSeed;
@@ -295,6 +331,7 @@ int main(int argc, char** argv) {
     // Le mode capture dessine dans un sprite hors écran : pas besoin de la
     // boucle d'événements SDL (qui ne rend jamais la main).
     if (g_fontTest) return runFontTest();
+    if (g_framesMode) return runFrames();
     if (g_shotMode) return runShots();
     return lgfx::Panel_sdl::main(userMain);
 }

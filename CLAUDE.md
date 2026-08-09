@@ -78,6 +78,12 @@ en place — régénérer avec ces deux scripts si besoin. Avant tout commit
 d'un nouveau fichier généré, se demander : encode-t-il de la marque ou du
 contenu ? Si oui, il rejoint le `.gitignore`.
 
+**Nuance des captures d'écran** (2026-08-09) : `docs/images/` est
+versionné. Une capture 240 × 135 du firmware en marche est du matériel
+**promotionnel** — c'est la raison d'être de l'objet — et ne redonne ni
+les assets sources (masques, vectoriels) ni le corpus exploitable. Ce qui
+reste interdit : les fichiers sources de marque et les en-têtes générés.
+
 ## Standard visuel
 
 Le même que Daoa 2 : calme, précis, premium, minimal, typographique,

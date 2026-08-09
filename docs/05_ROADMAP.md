@@ -75,5 +75,24 @@ hanzi avec bascule efontJA_24_b pour les figures 33/43/44. La fonte dédiée
 - [x] Sons PCM doux (pentatonique des traits, mutations, résolution, ticks)
 - [x] Aide enrichie (section lecture du lieu + touches s/w)
 - [x] Partitions max_app_8MB (pile WiFi) — flash 41 % de 8 Mo
-- [ ] Validation sur appareil : scan réel, rendu du champ, écoute des sons
+- [x] Validation sur appareil : scan réel, champ, sons — OK (2026-08-09)
+- [x] Champ enrichi : halos, ondes concentriques, réponse au tirage
+- [x] Bascules (w/h/s) sans perte du tirage en cours
+- [x] Indications de touches sur accueil (s) et tirage (w)
 - [ ] Handoff v3 à Claude Design : langage visuel du champ + écran réglages
+
+## Phase 2.1 — Vitrine publique — FAIT (2026-08-09)
+
+- [x] README anglais (public maker international) + README.fr.md
+- [x] Captures versionnées dans `docs/images/` (nuance de doctrine :
+      une capture du firmware est promotionnelle, pas un asset source)
+- [x] GIF du champ vivant, mode `--frames` du simulateur (60 frames)
+- [x] Bandeau composite quatre écrans
+
+## Reste à faire
+
+- [ ] Typographie : fonte VLW dédiée (latin soigné + 64 glyphes exacts)
+- [ ] Light-sleep / extinction écran en veille
+- [ ] Option : geste IMU (secouer) pour tirer une ligne
+- [ ] Licence du dépôt public à décider
+- [ ] Réinstaller M5Launcher (M5Burner) à la fin des itérations série
