@@ -66,6 +66,11 @@ générés à la compilation (pas de JSON ni d'ArduinoJson à l'exécution).
 | RNG | TRNG matériel | Tirage réel |
 | Batterie | 1750 mAh + interrupteur | Session courte ; light-sleep en veille suffit |
 
+> Révision matérielle du 2026-07-13 : la batterie passe de 1750 à 1500 mAh
+> (journal de versions de la fiche officielle). Le raisonnement ci-dessus
+> n'en est pas affecté — la consommation annoncée est de 120 mA au repos,
+> 132 mA en WiFi sous 4,2 V.
+
 ## 4. Chaîne d'outils
 
 **Recommandé : VS Code + PlatformIO, framework Arduino-ESP32 (core 3.x).**

@@ -167,7 +167,7 @@ reste borné aux plafonds.
 | **Écran** | ST7789V2, 1,14″, **240 × 135**, soit ~25 × 14 mm à ~245 ppi |
 | **Clavier** | 56 touches, contrôleur I²C **TCA8418** |
 | **Audio** | codec ES8311 + NS4150B + haut-parleur 1 W |
-| **Divers** | IMU BMI270, IR, microSD, batterie 1750 mAh |
+| **Divers** | IMU BMI270, IR, microSD, batterie 1500 mAh (1750 mAh sur les exemplaires d'avant juillet 2026) |
 
 Empreinte du firmware : **3,47 Mo de flash** (41 % des 8 Mo) et
 **50,9 Ko de RAM** (15,5 %). Le framebuffer plein écran est un sprite

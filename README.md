@@ -166,7 +166,7 @@ stays bounded at the caps.
 | **Display** | ST7789V2, 1.14″, **240 × 135** — about 25 × 14 mm at ~245 ppi |
 | **Keyboard** | 56 keys, **TCA8418** I²C controller |
 | **Audio** | ES8311 codec + NS4150B + 1 W speaker |
-| **Also** | BMI270 IMU, IR, microSD, 1750 mAh battery |
+| **Also** | BMI270 IMU, IR, microSD, 1500 mAh battery (1750 mAh on units made before July 2026) |
 
 Firmware footprint: **3.47 MB of flash** (41 % of 8 MB) and **50.9 KB of
 RAM** (15.5 %). The full-screen framebuffer is a 16-bit, 64.8 KB sprite in
