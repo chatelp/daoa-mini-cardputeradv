@@ -174,6 +174,28 @@ SRAM: everything is drawn off-screen and pushed in one go — no flicker.
 
 ---
 
+## Install
+
+Grab `daoa-mini-1.0-factory.bin` from the
+[latest release](https://github.com/chatelp/daoa-mini-cardputeradv/releases/latest)
+and write it at offset `0`:
+
+```bash
+esptool.py --chip esp32s3 --baud 1500000 write_flash 0 daoa-mini-1.0-factory.bin
+```
+
+**Cardputer ADV only** — the original Cardputer has a different keyboard
+matrix and audio codec, and has never been tried.
+
+Writing at offset `0` rewrites the NVS partition too, so the settings
+return to their defaults. The image is the factory one: bootloader,
+partition table and application in a single file.
+
+The firmware is also listed in the M5Stack catalogue
+([WebBurner](https://burner.m5stack.com/)) as *Daoa Mini*.
+
+---
+
 ## Build, simulate, flash
 
 ```bash

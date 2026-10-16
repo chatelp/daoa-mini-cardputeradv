@@ -176,6 +176,28 @@ un bloc — zéro scintillement.
 
 ---
 
+## Installer
+
+Récupérer `daoa-mini-1.0-factory.bin` depuis la
+[dernière release](https://github.com/chatelp/daoa-mini-cardputeradv/releases/latest)
+et l'écrire à l'adresse `0` :
+
+```bash
+esptool.py --chip esp32s3 --baud 1500000 write_flash 0 daoa-mini-1.0-factory.bin
+```
+
+**Cardputer ADV uniquement** — le Cardputer d'origine n'a ni le même
+clavier ni le même codec audio, et n'a jamais été essayé.
+
+L'écriture à l'adresse `0` réécrit aussi la partition NVS : les réglages
+reviennent à leurs valeurs par défaut. L'image est celle d'usine :
+bootloader, table de partitions et application en un seul fichier.
+
+Le firmware est également listé au catalogue M5Stack
+([WebBurner](https://burner.m5stack.com/)) sous le nom *Daoa Mini*.
+
+---
+
 ## Compiler, simuler, flasher
 
 ```bash
